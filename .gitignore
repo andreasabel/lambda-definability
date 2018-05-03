@@ -1,0 +1,10 @@
+*~
+*.agdai
+*.aux
+*_aux
+*.bbl
+*.blg
+*.log
+*.pdf
+all.bib
+medium.bib

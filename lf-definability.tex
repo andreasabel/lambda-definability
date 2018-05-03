@@ -1,0 +1,258 @@
+\nonstopmode
+\documentclass[a4paper]{article}
+\usepackage{natbib}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{amsmath}
+
+\input{macros}
+
+\newtheorem{theorem}{Theorem}
+%\newtheorem*{theorem*}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+%\newcommand{\qed}{\hfill\ensuremath{\Box}}
+% from llncs.cls
+%\def\squareforqed{\hbox{\rlap{$\sqcap$}$\sqcup$}}
+\def\squareforqed{\ensuremath{\Box}}
+\def\qed{\ifmmode\squareforqed\else{\unskip\nobreak\hfil
+\penalty50\hskip1em\null\nobreak\hfil\squareforqed
+\parfillskip=0pt\finalhyphendemerits=0\endgraf}\fi}
+
+\newenvironment{proof}[1][]{\noindent\ifthenelse{\equal{#1}{}}{{\it
+      Proof.}}{{\it Proof #1.}}\hspace{2ex}}{\qed\bigskip}
+\newenvironment{proof*}[1][]{\noindent\ifthenelse{\equal{#1}{}}{{\it
+      Proof.}}{{\it Proof #1.}}\hspace{2ex}}{\bigskip}
+
+\newcommand{\wk}{\mathord{\uparrow}}
+\newcommand{\WW}{\mathbb{W}}
+\newcommand{\tAr}{\mathsf{Ar}}
+\newcommand{\Ar}[1]{\tAr(#1)}
+
+\title{What is a LF(-definable) function?}
+\author{Andreas Abel}
+\date{May 2018}
+
+\begin{document}
+\maketitle
+
+\section{Functions definable by a STLC term}
+
+\cite{jungTiuryn:tlca93} give a concise description of STLC-definable
+functions using Kripke logical predicates.
+We recapitulate some of our results in our own notation and
+terminology.
+
+\paradot{Syntax}
+Types and contexts (snoc-lists of types).
+\[
+\begin{array}{lllrll}
+  \Ty & \ni & S,T,U & ::= & \iota & \mbox{base type}
+\\ &&& \mid & U \To T & \mbox{function type}
+\\[1ex]
+  \Cxt & \ni & \Gamma,\Delta & ::= & \cempty & \mbox{empty context}
+\\ &&& \mid & \Gamma.U & \mbox{context extension}
+\end{array}
+\]
+The indexed set of simply-typed variables $\Var \_ \_ : \Cxt \to \Ty \to \Set$
+is defined inductively by the
+following rules for $x \in \Var \Gamma T$.
+\[
+  \ru{}{\ind 0 \in \Var {\Gamma.T} T}
+\qquad
+  \ru{\ind i \in \Var \Gamma T
+    }{\ind{i+1} \in \Var {\Gamma.U} T}
+\]
+The indexed set of simply-typed terms
+$\Tm \_ \_ : \Cxt \to \Ty \to \Set$ is defined inductively by the
+following rules for $t \in \Tm \Gamma T$.
+\begin{gather*}
+  \ru{x \in \Var \Gamma T}{x \in \Tm \Gamma T}
+\qquad
+  \ru{t \in \Tm {\Gamma.U} T}{\lambda t \in \Tm \Gamma {U \To T}}
+\\[2ex]
+  \ru{t \in \Tm \Gamma {U \To T} \qquad u \in \Tm \Gamma U
+    }{t\,u \in \Tm \Gamma T}
+\end{gather*}
+We write $\Gamma \der t : T$ for $t \in \Tm \Gamma T$.
+
+Let weakening $\wk : \Tm \Gamma T \to \Tm {\Gamma.U} T$ and
+single substitution $\_[\_] : \Tm {\Gamma.U} T \to \Tm \Gamma U \to \Tm
+\Gamma T$ be defined recursively by the usual generalizations.
+
+\subsection{Interpretation into the full function space}
+
+We fix a set $\denty \iota$ to interpret the base type.  The
+interpretation is extended to arbitrary types and contexts by setting:
+\[
+\begin{array}{llll}
+  \denty{U \To T} & = & \denty U \to \denty T
+    & \mbox{full (set-theoretic) function space}
+\\
+  \denty{\cempty} & = & 1
+    & \mbox{unit set}
+\\
+  \denty{\Gamma.U} & = & \denty \Gamma \times \denty U
+    & \mbox{cartesian product}
+\end{array}
+\]
+Let $\gamma$ range over elements of $\denty\Gamma$ and $d$ over
+elements of $\denty T$.
+
+Variables $\dent\_\_ : \Var \Gamma T \to \denty \Gamma \to \denty T$
+are projections defined recursively by:
+\[
+\begin{array}{rlll}
+  \dent {\ind 0} {\gamma,d} & = & d \\
+  \dent {\ind{i+1}} {\gamma,d} & = & \dent {\ind i} \gamma \\
+\end{array}
+\]
+This interpretation extends to terms
+$\dent\_\_ : \Tm \Gamma T \to \denty \Gamma \to \denty T$
+by the following recursive clauses:
+\[
+\begin{array}{llll}
+  \dent{\lambda t}\gamma(d) & = & \dent t {\gamma,d}
+   & \mwhere \Gamma.U \der t : T
+     \mand d \in \denty U \\
+  \dent{t\,u}\gamma & = & \dent t \gamma (\dent u \gamma)
+   & \mwhere \Gamma \der t : U \To T \mand \Gamma \der u : U \\
+\end{array}
+\]
+Note that the interpretation satisfies the equational laws of STLC:
+\[
+  (\beta)\quad
+  \denty{(\lambda t)\,u} = \denty{t[u]}
+\qquad\qquad
+  (\eta)\quad
+  \denty{\lambda.\,(\wk t)\,\ind 0} = \denty t
+\]
+
+\subsection{Kripke logical predicates}
+
+\cite{jungTiuryn:tlca93} define a rather general notion of Kripke
+logical predicate which they call \emph{Kripke logical relation of
+  varying arity}.
+We will just speak of \emph{Kripke logical predicate}.
+% We will not make use of their terminology since we
+% think that their \emph{varying arity} aspect is already covered by the
+% attribute \emph{Kripke}.
+Also, we will use a slight refinement of
+their setup due to \cite{fioreSimpson:tlca99}.
+
+We fix a category $\WW$ of worlds and functor $\tAr : \WW \to \Set$,
+called the \emph{arity functor}.
+Given a world morphism $\tau : w' \to w$, we obtain a function
+$\Ar \tau : \Ar{w'} \to \Ar{w}$.  Usually, we will write $\Ar\tau$
+just as $\tau : \Ar{w'} \to \Ar{w}$.
+%$\tau(a')$ instead of $\Ar(\tau)(a')$ for $a' \in \Ar{w'}$.
+
+A \emph{Kripke logical predicate} (KLP) is a predicate
+\[
+  \Den\_\_ : (T : \Ty) \to (w : \WW) \to (\Ar w \to \denty T) \to
+  \Prop
+\]
+% (used with set notation $d \in \Den T w a$)
+such that the following conditions are met:
+\begin{enumerate}
+\item Base type monotonicity (contravariant).
+  Let $f : \Ar w \to \denty \iota$.  Then\\
+  $f \in \Den \iota w$ implies $f \comp \tau \in \Den \iota {w'}$ for all
+  $\tau : w' \to w$.
+\item Kripke function space. Let $f : \Ar w \to \denty {U} \to
+  \denty{T}$.  Then: \\
+  $f \in \Den{U \To T} w$ iff $f \comp (\tau,d) \in \Den T {w'}$ for all
+  $\tau : w' \to w$ and $d \in \Den U {w'}$.
+  Herein, $(f \comp (\tau,d))(a') = f\,(\tau(a'))\,(d(a'))$ for $a'
+  \in \Ar{w'}$.
+\end{enumerate}
+For $\WW$ and $\tAr$ fixed, a Kripke logical predicate is already
+determined by its definition at base type $\iota$.
+
+\begin{example}
+\label{ex:stlcdef}
+A specific KLP to characterize the STLC-definable functions is given
+by $\WW = \Cxt$ and $\Ar\Gamma = \denty\Gamma$ and
+$f \in \Den\iota\Gamma \iff \exists t \in \Tm \Gamma \iota.\ f =
+\denty t$, stating that a function $f : \denty\Gamma \to \denty\iota$
+is STLC-definable if it is the interpretation of a term of type
+$\iota$ in context $\Gamma$.
+\end{example}
+\begin{lemma}[Monotonicity at any type]
+  If $\tau : w' \to w$ and $f \in \Den T w$ then $f \comp \tau \in
+  \Den T {w'}$.
+\end{lemma}
+A KLP is extended to contexts by setting
+\[
+\begin{array}{lll}
+  \rho \in \Den \cempty w & \iff & \mtrue \\
+  \rho \in \Den {\Gamma.U} w & \iff &
+    \pi_1 \comp \rho \in \Den \Gamma w \mand
+    \pi_2 \comp \rho \in \Den U w
+\end{array}
+\]
+\begin{theorem}[Fundamental theorem of logical relations]
+  If\/ $\Gamma \der t : T$ and $\rho \in \Den \Gamma w$ then $\denty t \comp
+  \rho \in \Den T w$.
+\end{theorem}
+\begin{proof*}
+By induction on $t \in \Tm \Gamma T$.
+\begin{caselist}
+
+\nextcase $\Gamma.T \der \ind 0 : T$.  Yes, since $\denty{\ind 0}
+\comp \rho = \pi_2 \comp \rho \in \Den T w$.
+
+\nextcase $\Gamma.U \der \ind{i+1} : T$.
+Since $\pi_1 \comp \gamma \in \Den \Gamma w$, by induction hypothesis,
+$\denty{\ind i} \comp (\pi_1 \comp \gamma) \in \Den T w$.
+Thus $\denty{\ind{i+1}} \comp \gamma \in \Den T w$.
+
+\nextcase $\Gamma \der t\,u : T$ where $\Gamma \der t : U \To T$ and
+$\Gamma \der u : U$.
+By induction hypothesis, $\denty t \comp \rho \in \Den {U \To T} w$
+and $\denty u \comp \rho \in \Den U w$, thus,
+$(\denty t \comp \rho) \comp (\tid, \denty u \comp \rho) \in \Den T w$,
+which means that $\denty{t\,u} \comp \rho \in \Den T w$.
+
+\nextcase $\Gamma \der \lambda t : U \To T$ where $\Gamma.U \der t : T$.
+To show $\denty{\lambda t} \comp \rho \in \Den {U \To T} w$, assume
+arbitrary $\tau : w' \to w$ and $d \in \Den U {w'}$.  We have to show
+that $f := \denty{\lambda t} \comp \rho \comp (\tau, d) \in \Den T
+{w'}$.
+Note that
+$f(\gamma') = \dent{\lambda t}{\rho(\tau(\gamma'))}(d(\gamma'))
+= \dent t{(\rho \comp \tau)(\gamma'),d(\gamma')}$
+and $\rho \comp \tau \in \Den \Gamma {w'}$.
+With $\rho'(\gamma') := ((\rho \comp \tau)(\gamma'), d(\gamma'))$
+have $\rho' \in \Den{\Gamma.U}{w'}$ and thus $\denty t \comp \rho' \in
+\Den T {w'}$.
+\qed
+\end{caselist}
+\end{proof*}
+
+
+\subsection{STLC-definability}
+
+Let a KLP $\Den T \Gamma$ be defined as in Example~\ref{ex:stlcdef}.
+\begin{lemma}[Reflection and reification]\bla
+  \begin{enumerate}
+  \item If $\Gamma \der t : T$ then $\denty t \in \Den T \Gamma$.
+  \item If $f \in \Den T \Gamma$ then $f = \denty t$ for some $\Gamma
+    \der t : T$.
+  \end{enumerate}
+\end{lemma}
+\begin{proof*}
+  By induction on the type.  For base type $\iota$, this is by definition.
+  For function type $U \To T$ etc.
+\qed
+\end{proof*}
+
+\bibliographystyle{abbrvnat}
+\bibliography{auto-lf-definability}
+
+\end{document}

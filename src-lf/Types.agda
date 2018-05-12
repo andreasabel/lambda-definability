@@ -41,19 +41,22 @@ Mor Δ Γ = C⦅ Δ ⦆ → C⦅ Γ ⦆
 Π : ∀{C : Set} (A : C → Set) (B : Σ C A → Set) (γ : C) → Set
 Π A B = λ γ → (x : A γ) → B (γ , x)
 
-module Univ (TyC : Set) (Ind : TyC → Cxt) (F⦅_⦆ : (k : TyC) → C⦅ Ind k ⦆ → Set) where
+module Univ (TyC : Set) (Ind : TyC → Set) (F⦅_⦆ : (k : TyC) → Ind k → Set) where
+
+  Index : (Γ : Cxt) (k : TyC) → Set
+  Index Γ k = C⦅ Γ ⦆ → Ind k
 
   mutual
     data Ty (Γ : Cxt) : Set where
+      dat  : (k : TyC) (i : Index Γ k) → Ty Γ
       unit : Ty Γ
-      con  : (k : TyC) (i : C⦅ Ind k ⦆) → Ty Γ
       pi   : (A : Ty Γ) (B : Ty (Γ ≻ A )) → Ty Γ
 
     _≻_ : (Γ : Cxt) (A : Ty Γ) → Cxt
     Γ ≻ A = Γ ▷ T⦅ A ⦆
 
     T⦅_⦆ : ∀{Γ} (A : Ty Γ) → Fam Γ
-    T⦅ con k i ⦆ _ = F⦅ k ⦆ i
+    T⦅ dat k i ⦆ = F⦅ k ⦆ ∘ i
     T⦅ unit   ⦆ _ = ⊤
     T⦅ pi A B ⦆ = Π T⦅ A ⦆ T⦅ B ⦆
     -- T⦅ pi A B ⦆ γ = (x : T⦅ A ⦆ γ) → T⦅ B ⦆ (γ , x)
@@ -84,23 +87,31 @@ module Univ (TyC : Set) (Ind : TyC → Cxt) (F⦅_⦆ : (k : TyC) → C⦅ Ind k
 
   record LF-KLP-Base : Set₂ where
     field
-      F⟦_⟧  : ∀ (k : TyC) (i : C⦅ Ind k ⦆) {Γ} → KPred Γ (con k i)
-      monF : ∀ (k : TyC) (i : C⦅ Ind k ⦆) {Γ} → Mon {Γ} (con k i) (F⟦ k ⟧ i)
+      F⟦_⟧  : ∀ (k : TyC) {Γ} (i : Index Γ k) → KPred Γ (dat k i)
+      monF : ∀ (k : TyC) {Γ} (i : Index Γ k) → Mon {Γ} (dat k i) (F⟦ k ⟧ i)
 
   module LF-KLP-Ext (P : LF-KLP-Base) (open LF-KLP-Base P) where
 
     T⟦_⟧ : ∀{Γ} (A : Ty Γ) {Δ} (σ : Mor Δ Γ) (f : Fun' Δ A σ) → Set₁
-    T⟦ con k i ⟧ = F⟦ k ⟧ i
+    T⟦ dat k i ⟧ = F⟦ k ⟧ i
     T⟦ unit ⟧ σ _ = Lift ⊤
     T⟦ pi A B ⟧ {Δ} σ f =  ∀{Φ} (σ′ : Mor Φ Δ) {d : Fun' Φ A (σ ∘′ σ′)}
       → (⟦d⟧ : T⟦ A ⟧ (σ ∘′ σ′) d)
       → T⟦ B ⟧ (ext (σ ∘′ σ′) A d) (kapp f σ′ d )
 
     monT : ∀{Γ} (A : Ty Γ) → Mon A T⟦ A ⟧
-    monT (con k i) = monF k i
+    monT (dat k i) = monF k i
     monT unit     ⟦f⟧ σ′ = _
     monT (pi A B) ⟦f⟧ σ′ σ″ ⟦d⟧ = ⟦f⟧ (σ′ ∘′ σ″) ⟦d⟧
 
+  record LF-KLP : Set₂ where
+    field
+      klp-base : LF-KLP-Base
+    open LF-KLP-Base klp-base public
+    open LF-KLP-Ext klp-base public
+
+  LF-definable : ∀{Γ} (A : Ty Γ) (f : Fun Γ A) → Set₂
+  LF-definable A f = ∀ (P : LF-KLP) (open LF-KLP P) → T⟦ A ⟧ id f
 
 {-
 _×̇_ : ∀{A C : Set} {B : A → Set} {D : C → Set}

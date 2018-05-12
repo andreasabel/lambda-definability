@@ -132,8 +132,8 @@ module _ (open STLC-KLP-Ext TmKLP-Base) where
 
     reflect : ∀{Γ} T (t : Tm Γ T) → T⟦ T ⟧ Γ E⦅ t ⦆
     reflect (base b) t = t , refl
-    reflect {Γ} (U ⇒ T) t {Δ} τ {d} ⟦d⟧ with reify U ⟦d⟧
-    reflect {Γ} (U ⇒ T) t {Δ} τ {d} ⟦d⟧ | u , refl = reflect T (app (t w[ τ ]ᵉ) u) -- REWRITE wk-eval
+    reflect (U ⇒ T) t τ ⟦d⟧ with reify U ⟦d⟧
+    reflect (U ⇒ T) t τ ⟦d⟧ | u , refl = reflect T (app (t w[ τ ]ᵉ) u) -- REWRITE wk-eval
 
     reify : ∀{Γ} T {f : Fun Γ T} (⟦f⟧ : T⟦ T ⟧ Γ f) → TmImg Γ T f
     reify (base b) ⟦f⟧ = ⟦f⟧

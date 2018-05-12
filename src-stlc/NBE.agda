@@ -9,8 +9,6 @@ open import Function using (id; _∘_; _∘′_)
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; cong)
 
--- {-# BUILTIN REWRITE _≡_ #-}
-
 import SimpleTypes
 
 module NBE
@@ -47,47 +45,56 @@ mutual
 
 -- A syntactical klp: being the image of a normal form
 
-NeImg : ∀ Γ T (f : Fun Γ T) → Set
-NeImg Γ T f = ∃ λ (t : Tm Γ T) → Neutral t × E⦅ t ⦆ ≡ f
+record NeImg Γ T (f : Fun Γ T) : Set where
+  constructor neImg; field
+    {t} : Tm Γ T
+    ne  : Neutral t
+    eq  : E⦅ t ⦆ ≡ f
 
-NfImg : ∀ Γ T (f : Fun Γ T) → Set
-NfImg Γ T f = ∃ λ (t : Tm Γ T) → Normal t × E⦅ t ⦆ ≡ f
+record NfImg Γ T (f : Fun Γ T) : Set where
+  constructor nfImg; field
+    {t} : Tm Γ T
+    nf  : Normal t
+    eq  : E⦅ t ⦆ ≡ f
 
 neImgToNf : ∀{Γ T f} → NeImg Γ T f → NfImg Γ T f
-neImgToNf (t , ne , p) = (t , nfNe ne , p)
+neImgToNf (neImg ne eq) = nfImg (nfNe ne) eq
 
 NfKLP-Base : STLC-KLP-Base
 NfKLP-Base .STLC-KLP-Base.B⟦_⟧ b Γ f                =  NeImg Γ (base b) f
-NfKLP-Base .STLC-KLP-Base.monB b τ (t , ne , refl)  =  t w[ τ ]ᵉ , wkNe ne τ , wk-eval t τ
+NfKLP-Base .STLC-KLP-Base.monB b τ (neImg {t} ne refl)  =  neImg (wkNe ne τ) (wk-eval t τ)
 
 -- Reflection / reification
 
 module _ (open STLC-KLP-Ext NfKLP-Base) where
   mutual
 
-    reflectNe : ∀{Γ} T (t : Tm Γ T) (ne : Neutral t) → T⟦ T ⟧ Γ E⦅ t ⦆
-    reflectNe (base b) t ne = t , ne , refl
-    reflectNe {Γ} (U ⇒ T) t ne {Δ} τ {d} ⟦d⟧ with reifyNf U ⟦d⟧
-    reflectNe {Γ} (U ⇒ T) t ne {Δ} τ {d} ⟦d⟧ | u , nf , refl = reflectNe T (app (t w[ τ ]ᵉ) u) (neApp (wkNe ne τ) nf) -- REWRITE wk-eval
+    reflectNe : ∀{Γ} T {t : Tm Γ T} (ne : Neutral t) → T⟦ T ⟧ Γ E⦅ t ⦆
+    reflectNe (base b) ne = neImg ne refl
+    reflectNe (U ⇒ T) ne τ ⟦d⟧ with reifyNf U ⟦d⟧
+    reflectNe (U ⇒ T) ne τ ⟦d⟧ | nfImg nf refl =
+      reflectNe T (neApp (wkNe ne τ) nf) -- REWRITE wk-eval
 
     reifyNf : ∀{Γ} T {f : Fun Γ T} (⟦f⟧ : T⟦ T ⟧ Γ f) → NfImg Γ T f
     reifyNf (base b) ⟦f⟧ = neImgToNf ⟦f⟧
-    reifyNf (U ⇒ T) ⟦f⟧ with reifyNf T (⟦f⟧ (weak id≤) {proj₂} (reflectNe U (var vz) (neVar _)))
-    ... | t , nf , ⦅t⦆≡uncurryf = abs t , nfAbs nf , cong curry ⦅t⦆≡uncurryf
+    reifyNf (U ⇒ T) ⟦f⟧ with reifyNf T (⟦f⟧ (weak id≤) (reflectNe U (neVar vz)))
+    ... | nfImg nf ⦅t⦆≡uncurryf = nfImg (nfAbs nf) (cong curry ⦅t⦆≡uncurryf)
 
 NfKLP : STLC-KLP
 NfKLP .STLC-KLP.klp-base = NfKLP-Base
-NfKLP .STLC-KLP.satC c = reflectNe (ty c) (con c) (neCon c)
+NfKLP .STLC-KLP.satC c = reflectNe (ty c) (neCon c)
 
+open Fund NfKLP
 
--- open Fund Nf
-
-{-
 -- Identity environment
 
 idEnv : ∀ Γ → C⟦ Γ ⟧ Γ id
-idEnv Γ = ?
+idEnv ε = _
+idEnv (Γ ▷ U) = monC Γ (weak id≤) (idEnv Γ) , reflectNe U (neVar vz)
 
 nbe : ∀{Γ T} (t : Tm Γ T) → NfImg Γ T E⦅ t ⦆
-nbe t = ?
--}
+nbe t = reifyNf _ (fund t (idEnv _))
+
+-- -}
+
+-- -}

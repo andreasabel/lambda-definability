@@ -18,10 +18,6 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; sym
 
 module DependentTypes where
 
-_×̇_ : ∀{A C : Set} {B : A → Set} {D : C → Set}
-     (f : A → C) (g : ∀ a → B a → D (f a)) → Σ A B → Σ C D
-(f ×̇ g) (x , y) = f x , g x y
-
 -- Contexts
 
 mutual
@@ -40,6 +36,58 @@ mutual
 Mor : (Δ Γ : Cxt) → Set
 Mor Δ Γ = C⦅ Δ ⦆ → C⦅ Γ ⦆
 
+
+-- Types (families)
+
+Π : ∀{C : Set} (A : C → Set) (B : Σ C A → Set) (γ : C) → Set
+Π A B = λ γ → (x : A γ) → B (γ , x)
+
+mutual
+  data Ty (Γ : Cxt) : Set where
+    unit : Ty Γ
+    pi   : (A : Ty Γ) (B : Ty (Γ ≻ A )) → Ty Γ
+
+  _≻_ : (Γ : Cxt) (A : Ty Γ) → Cxt
+  Γ ≻ A = Γ ▷ T⦅ A ⦆
+
+  T⦅_⦆ : ∀{Γ} (A : Ty Γ) → Fam Γ
+  T⦅ unit   ⦆ _ = ⊤
+  T⦅ pi A B ⦆ = Π T⦅ A ⦆ T⦅ B ⦆
+  -- T⦅ pi A B ⦆ γ = (x : T⦅ A ⦆ γ) → T⦅ B ⦆ (γ , x)
+
+Fun : (Γ : Cxt) (A : Ty Γ) → Set
+Fun Γ A = (γ : C⦅ Γ ⦆) → T⦅ A ⦆ γ
+
+Fun' : (Δ {Γ} : Cxt) (A : Ty Γ) (σ : Mor Δ Γ) → Set
+Fun' Δ A σ = (δ : C⦅ Δ ⦆) → T⦅ A ⦆ (σ δ)
+
+ext : ({Δ Γ} : Cxt) (σ : Mor Δ Γ) (A : Ty Γ) (a : Fun' Δ A σ) → Mor Δ (Γ ≻ A)
+ext σ A a = λ δ → σ δ , a δ
+
+-- Kripke application
+
+kapp : ∀{C D : Set}{A : C → Set} {B : (c : C) → A c → Set}
+       (f : (c : C) (a : A c) → B c a) (τ : D → C) (a : (d : D) → A (τ d)) →
+       (d : D) → B (τ d) (a d)
+kapp f τ a = λ d → f (τ d) (a d)
+
+-- Kripke predicate
+
+T⟦_⟧ : ∀{Γ} (A : Ty Γ) {Δ} (σ : Mor Δ Γ) (f : Fun' Δ A σ) → Set₁
+T⟦ unit ⟧ σ _ = Lift ⊤
+T⟦ pi A B ⟧ {Δ} σ f =  ∀{Φ} (σ′ : Mor Φ Δ) {d : Fun' Φ A (σ ∘′ σ′)}
+  → (⟦d⟧ : T⟦ A ⟧ (σ ∘′ σ′) d)
+  → T⟦ B ⟧ (ext (σ ∘′ σ′) A d) (kapp f σ′ d )
+
+monT : ∀{Γ Δ} (A : Ty Γ) {σ : Mor Δ Γ} {f : Fun' Δ A σ} (⟦f⟧ : T⟦ A ⟧ σ f)
+  → ∀{Φ} (σ′ : Mor Φ Δ) → T⟦ A ⟧ (σ ∘ σ′) (f ∘ σ′)
+monT unit     ⟦f⟧ σ′ = _
+monT (pi A B) ⟦f⟧ σ′ σ″ ⟦d⟧ = ⟦f⟧ (σ′ ∘′ σ″) ⟦d⟧
+
+
+_×̇_ : ∀{A C : Set} {B : A → Set} {D : C → Set}
+     (f : A → C) (g : ∀ a → B a → D (f a)) → Σ A B → Σ C D
+(f ×̇ g) (x , y) = f x , g x y
 
 -- Order preserving projections
 
@@ -125,33 +173,6 @@ postulate
 
 test-weak-comp-lift : ∀{Γ Δ} {S : Fam Γ} {τ : Δ ≤ Γ} → weak id≤ ∙ lift {S = S} τ ≡ weak {S = S ∘′ τ⦅ τ ⦆} τ
 test-weak-comp-lift = refl
-
--- Types (families)
-
-Π : ∀{C : Set} (A : C → Set) (B : Σ C A → Set) (γ : C) → Set
-Π A B = λ γ → (x : A γ) → B (γ , x)
-
-mutual
-  data Ty (Γ : Cxt) : Set where
-    unit : Ty Γ
-    pi   : (A : Ty Γ) (B : Ty (Γ ≻ A )) → Ty Γ
-
-  _≻_ : (Γ : Cxt) (A : Ty Γ) → Cxt
-  Γ ≻ A = Γ ▷ T⦅ A ⦆
-
-  T⦅_⦆ : ∀{Γ} (A : Ty Γ) → Fam Γ
-  T⦅ unit   ⦆ _ = ⊤
-  T⦅ pi A B ⦆ = Π T⦅ A ⦆ T⦅ B ⦆
-  -- T⦅ pi A B ⦆ γ = (x : T⦅ A ⦆ γ) → T⦅ B ⦆ (γ , x)
-
-Fun : (Γ : Cxt) (A : Ty Γ) → Set
-Fun Γ A = (γ : C⦅ Γ ⦆) → T⦅ A ⦆ γ
-
-Fun' : (Δ {Γ} : Cxt) (A : Ty Γ) (σ : Mor Δ Γ) → Set
-Fun' Δ A σ = (δ : C⦅ Δ ⦆) → T⦅ A ⦆ (σ δ)
-
-ext : ({Δ Γ} : Cxt) (σ : Mor Δ Γ) (A : Ty Γ) (a : Fun' Δ A σ) → Mor Δ (Γ ≻ A)
-ext σ A a = λ δ → σ δ , a δ
 
 -- Weakening types
 
@@ -320,16 +341,6 @@ mutual
 
 -- {-# REWRITE denT-inst-eq #-}
 
--- Kripke application
-
-kapp : ∀{C D : Set}{A : C → Set} {B : (c : C) → A c → Set}
-       (f : (c : C) (a : A c) → B c a) (τ : D → C) (a : (d : D) → A (τ d)) →
-       (d : D) → B (τ d) (a d)
-kapp f τ a = λ d → f (τ d) (a d)
-
--- Kripke predicate
-
-
 -- mutual
 --   T⟦_⟧ : ∀{Γ} (A : Ty Γ) {Δ} (τ : Δ ≤ Γ) → Fun Δ (A [ τ ]T) → Set₁
 --   T⟦ unit ⟧ τ f = Lift ⊤
@@ -338,29 +349,31 @@ kapp f τ a = λ d → f (τ d) (a d)
 --     → T⟦ {!inst B Φ ?!} ⟧ id≤ (kapp f τ⦅ σ ⦆  d )
 --    -- REWRITE ar-comp, denT-wk
 
+-- -- Syntax with semantic type codes
 
-T⟦_⟧ : ∀{Γ} (A : Ty Γ) {Δ} (σ : Mor Δ Γ) (f : Fun' Δ A σ) → Set₁
-T⟦ unit ⟧ σ _ = Lift ⊤
-T⟦ pi A B ⟧ {Δ} σ f =  ∀{Φ} (σ′ : Mor Φ Δ) {d : Fun' Φ A (σ ∘′ σ′)}
-  → (⟦d⟧ : T⟦ A ⟧ (σ ∘′ σ′) d)
-  → T⟦ B ⟧ (ext (σ ∘′ σ′) A d) (kapp f σ′ d )
+-- data Var : (Γ : Cxt) (A : Ty Γ) → Set₁ where
+--   vz : ∀{Γ} A                 → Var (Γ ≻ A) (A [ weak id≤ ]T)
+--   vs : ∀{Γ} A B (x : Var Γ A) → Var (Γ ≻ B) (A [ weak id≤ ]T)
 
-monT : ∀{Γ Δ} (A : Ty Γ) {σ : Mor Δ Γ} {f : Fun' Δ A σ} (⟦f⟧ : T⟦ A ⟧ σ f)
-  → ∀{Φ} (σ′ : Mor Φ Δ) → T⟦ A ⟧ (σ ∘ σ′) (f ∘ σ′)
-monT unit     ⟦f⟧ σ′ = _
-monT (pi A B) ⟦f⟧ σ′ σ″ ⟦d⟧ = ⟦f⟧ (σ′ ∘′ σ″) ⟦d⟧
+-- -- Weakening variables
+
+-- _[_]ᵛ : ∀{Γ Δ A} (x : Var Γ A) (τ : Δ ≤ Γ) → Var Δ (A [ τ ]T)
+-- x    [ id≤    ]ᵛ = x  -- REWRITE wkT-id
+-- _[_]ᵛ {Γ} {Δ} {A} x    (weak {S = S} τ) =  vs (A [ τ ]T) {!!} (x [ τ ]ᵛ)
+-- -- x    [ weak τ ]ᵛ =  vs {!.A [ τ ]T!} {!!} (x [ τ ]ᵛ)
+-- (vz A) [ lift {Γ} {Δ} τ ]ᵛ =  vz (A [ τ ]T)  -- REWRITE denT-wk
+-- vs A B x [ lift τ ]ᵛ =  vs (A [ τ ]T) (B [ τ ]T) (x [ τ ]ᵛ)
 
 -- Syntax with semantic type codes
 
 data Var : (Γ : Cxt) (A : Ty Γ) → Set₁ where
   vz : ∀{Γ} A                 → Var (Γ ≻ A) (A [ weak id≤ ]T)
-  vs : ∀{Γ} A B (x : Var Γ A) → Var (Γ ≻ B) (A [ weak id≤ ]T)
+  vs : ∀{Γ} A S (x : Var Γ A) → Var (Γ ▷ S) (A [ weak id≤ ]T)
 
 -- Weakening variables
 
 _[_]ᵛ : ∀{Γ Δ A} (x : Var Γ A) (τ : Δ ≤ Γ) → Var Δ (A [ τ ]T)
-x    [ id≤    ]ᵛ = x  -- REWRITE wkT-id
-_[_]ᵛ {Γ} {Δ} {A} x    (weak {S = S} τ) =  vs (A [ τ ]T) {!!} (x [ τ ]ᵛ)
--- x    [ weak τ ]ᵛ =  vs {!.A [ τ ]T!} {!!} (x [ τ ]ᵛ)
-(vz A) [ lift {Γ} {Δ} τ ]ᵛ =  vz (A [ τ ]T)  -- REWRITE denT-wk
-vs A B x [ lift τ ]ᵛ =  vs (A [ τ ]T) (B [ τ ]T) (x [ τ ]ᵛ)
+x          [ id≤    ]ᵛ = x  -- REWRITE wkT-id
+_[_]ᵛ {A = A} x (weak {S = S} τ) =  vs (A [ τ ]T) S (x [ τ ]ᵛ)
+(vz A)     [ lift τ ]ᵛ =  vz (A [ τ ]T)  -- REWRITE denT-wk
+(vs A S x) [ lift τ ]ᵛ =  vs (A [ τ ]T) (S ∘′ τ⦅ τ ⦆) (x [ τ ]ᵛ)

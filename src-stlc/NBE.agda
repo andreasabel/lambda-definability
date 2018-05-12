@@ -60,8 +60,11 @@ record NfImg Γ T (f : Fun Γ T) : Set where
 neImgToNf : ∀{Γ T f} → NeImg Γ T f → NfImg Γ T f
 neImgToNf (neImg ne eq) = nfImg (nfNe ne) eq
 
+nfImgAbs : ∀{Γ T U f} → NfImg (Γ ▷ U) T f → NfImg Γ (U ⇒ T) (curry f)
+nfImgAbs (nfImg nf ⦅nf⦆≡f) = nfImg (nfAbs nf) (cong curry ⦅nf⦆≡f)
+
 NfKLP-Base : STLC-KLP-Base
-NfKLP-Base .STLC-KLP-Base.B⟦_⟧ b Γ f                =  NeImg Γ (base b) f
+NfKLP-Base .STLC-KLP-Base.B⟦_⟧ b Γ f                    =  NeImg Γ (base b) f
 NfKLP-Base .STLC-KLP-Base.monB b τ (neImg {t} ne refl)  =  neImg (wkNe ne τ) (wk-eval t τ)
 
 -- Reflection / reification
@@ -72,13 +75,11 @@ module _ (open STLC-KLP-Ext NfKLP-Base) where
     reflectNe : ∀{Γ} T {t : Tm Γ T} (ne : Neutral t) → T⟦ T ⟧ Γ E⦅ t ⦆
     reflectNe (base b) ne = neImg ne refl
     reflectNe (U ⇒ T) ne τ ⟦d⟧ with reifyNf U ⟦d⟧
-    reflectNe (U ⇒ T) ne τ ⟦d⟧ | nfImg nf refl =
-      reflectNe T (neApp (wkNe ne τ) nf) -- REWRITE wk-eval
+    ... | nfImg nf refl = reflectNe T (neApp (wkNe ne τ) nf) -- REWRITE wk-eval
 
     reifyNf : ∀{Γ} T {f : Fun Γ T} (⟦f⟧ : T⟦ T ⟧ Γ f) → NfImg Γ T f
     reifyNf (base b) ⟦f⟧ = neImgToNf ⟦f⟧
-    reifyNf (U ⇒ T) ⟦f⟧ with reifyNf T (⟦f⟧ (weak id≤) (reflectNe U (neVar vz)))
-    ... | nfImg nf ⦅t⦆≡uncurryf = nfImg (nfAbs nf) (cong curry ⦅t⦆≡uncurryf)
+    reifyNf (U ⇒ T) ⟦f⟧ = nfImgAbs (reifyNf T (⟦f⟧ (weak id≤) (reflectNe U (neVar vz))))
 
 NfKLP : STLC-KLP
 NfKLP .STLC-KLP.klp-base = NfKLP-Base

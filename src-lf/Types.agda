@@ -104,14 +104,18 @@ module Univ (TyC : Set) (Ind : TyC → Set) (F⦅_⦆ : (k : TyC) → Ind k → 
     monT unit     ⟦f⟧ σ′ = _
     monT (pi A B) ⟦f⟧ σ′ σ″ ⟦d⟧ = ⟦f⟧ (σ′ ∘′ σ″) ⟦d⟧
 
-  record LF-KLP : Set₂ where
-    field
-      klp-base : LF-KLP-Base
-    open LF-KLP-Base klp-base public
-    open LF-KLP-Ext klp-base public
+  module Constants (Const : Set) (ty : Const → Ty ε) (c⦅_⦆ : (c : Const) → T⦅ ty c ⦆ _) where
 
-  LF-definable : ∀{Γ} (A : Ty Γ) (f : Fun Γ A) → Set₂
-  LF-definable A f = ∀ (P : LF-KLP) (open LF-KLP P) → T⟦ A ⟧ id f
+    record LF-KLP : Set₂ where
+      field
+        klp-base : LF-KLP-Base
+      open LF-KLP-Base klp-base public
+      open LF-KLP-Ext klp-base public
+      field
+        satC : (c : Const) → T⟦ ty c ⟧ id (λ _ → c⦅ c ⦆)
+
+    LF-definable : ∀{Γ} (A : Ty Γ) (f : Fun Γ A) → Set₂
+    LF-definable A f = ∀ (P : LF-KLP) (open LF-KLP P) → T⟦ A ⟧ id f
 
 {-
 _×̇_ : ∀{A C : Set} {B : A → Set} {D : C → Set}

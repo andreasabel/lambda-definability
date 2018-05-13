@@ -1,4 +1,5 @@
 
+{-# OPTIONS --allow-unsolved-metas #-}
 {-# OPTIONS --postfix-projections #-}
 {-# OPTIONS --rewriting #-}
 
@@ -18,6 +19,7 @@ module Terms
   (TyC : Set) (Ind : TyC → Set) (F⦅_⦆ : (k : TyC) → Ind k → Set) (open Univ TyC Ind F⦅_⦆)
   (Const : Set) (ty : Const → Ty ε) (c⦅_⦆ : (c : Const) → T⦅ ty c ⦆ _) (open Constants Const ty c⦅_⦆)
   where
+
 _×̇_ : ∀{A C : Set} {B : A → Set} {D : C → Set}
      (f : A → C) (g : ∀ a → B a → D (f a)) → Σ A B → Σ C D
 (f ×̇ g) (x , y) = f x , g x y
@@ -162,6 +164,16 @@ postulate
 
 {-# REWRITE wkT-comp #-}
 
+-- Weakening the logical relation
+
+module WeakKripke (P : LF-KLP) (open LF-KLP P) where
+
+  wk-KLP : ∀{Γ} (A : Ty Γ) {Δ} (τ : Δ ≤ Γ) {Φ} (ρ : Mor Φ Δ) → T⟦ A [ τ ]T ⟧ ρ ≡ T⟦ A ⟧ (τ⦅ τ ⦆ ∘ ρ)
+  wk-KLP (dat k i) τ ρ = {!!}  -- Need naturality for F⟦_⟧
+  wk-KLP unit τ ρ = refl
+  wk-KLP (pi A B) τ ρ = {!!}  -- Need clever "with"
+
+
 -- Instantiating types (substitution)
 
 mutual
@@ -283,6 +295,21 @@ wk-eval (abs A t) τ = {!trans (cong curry (wk-eval t (lift' τ (denT-wk A τ)))
 -- ... | A' | A'' | eq | Z = ? ---  = {!wk-eval t (lift' τ (denT-wk A τ))!} -- rewrite wk-eval t (lift τ) = refl
 wk-eval (app t u) τ = {!!} -- rewrite wk-eval t τ | wk-eval u τ = refl
 
+{-
+-- Fundamental theorem
+
+module Fund (P : LF-KLP) (open LF-KLP P) where
+
+
+  -- Extension of KLP to contexts
+  -- NEED representable contexts
+
+  C⟦_⟧ : (Γ Δ : Cxt) (ρ : Mor Δ Γ) → Set
+  C⟦ ε ⟧ Δ !Δ = ⊤
+  C⟦ Γ ▷ U ⟧ Δ ρ = C⟦ Γ ⟧ Δ (proj₁ ∘′ ρ) × T⟦ {!U!} ⟧ (proj₂ ∘′ ρ)
+
+  fund : ∀{Γ Δ T} (t : Tm Γ T) {ρ : Mor Δ Γ} (⟦ρ⟧ : C⟦ Γ ⟧ Δ ρ) → T⟦ T ⟧ Δ (E⦅ t ⦆ ∘′ ρ)
+  fund = ?
 -- -}
 -- -}
 -- -}

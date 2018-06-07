@@ -3,16 +3,7 @@
 {-# OPTIONS --postfix-projections #-}
 {-# OPTIONS --rewriting #-}
 
-open import Data.Bool.Base
-
-open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Unit using (⊤)
-open import Data.Product using (∃; _×_; _,_; proj₁; proj₂; curry)
-
-open import Function using (id; _∘_; _∘′_)
-
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; cong; sym)
-
+open import Library
 import SimpleTypes
 import STLCDefinable
 
@@ -36,8 +27,8 @@ B⦅ _ ⦆ = ⊤
 
 -- We consider λ-calculus with no constants
 
-open SimpleTypes Base B⦅_⦆
-open STLCDefinable Base B⦅_⦆ ⊥ ⊥-elim ⊥-elim′
+open SimpleTypes   Base B⦅_⦆
+open STLCDefinable Base B⦅_⦆ ⊥ ⊥-elim (λ())
 
 A = base a
 B = base b
@@ -55,7 +46,7 @@ no-proj-from-ε _ (() , _)
 NP-Base : STLC-KLP-Base
 NP-Base .STLC-KLP-Base.B⟦_⟧ a Γ f = IsProjection Γ A f
 NP-Base .STLC-KLP-Base.B⟦_⟧ b Γ f = ⊥  -- b is always empty
-NP-Base .STLC-KLP-Base.monB a τ (x , refl) = x w[ τ ]ᵛ ,  sym (wk-evalv x τ)
+NP-Base .STLC-KLP-Base.monB a τ (x , refl) = x w[ τ ]ᵛ , sym (wk-evalv x τ)
 NP-Base .STLC-KLP-Base.monB b τ ()
 
 NP : STLC-KLP
@@ -67,13 +58,12 @@ Peirce = ((A ⇒ B) ⇒ A) ⇒ A
 -- Theorem: the Peirce type is not inhabited in STLC
 
 thm : ∀ f → STLC-definable ε Peirce f → ⊥
-thm f def = no-proj-from-ε A (def NP id≤ {λ _ → _} (λ τ ⟦d⟧ → lem ⟦d⟧))
+thm f def = no-proj-from-ε A (def NP id≤ (λ τ ⟦d⟧ → lem ⟦d⟧))
   where
   -- Lemma: T⟦ A ⇒ B ⟧ Δ is false.
   open STLC-KLP NP
   lem : ∀ {Δ d} → T⟦ A ⇒ B ⟧ Δ d → ∀{X : Set} → X
-  lem {Δ} {d} ⟦d⟧ with (⟦d⟧ (weak id≤) (vz , refl))
-  ... | ()
+  lem ⟦d⟧ = case ⟦d⟧ (weak id≤) (vz , refl) of λ()
 
 -- The argument runs just like the Kripke countermodel for Peirce in IPL.
 

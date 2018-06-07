@@ -1,14 +1,9 @@
+-- A term model yielding normalization
 
 {-# OPTIONS --postfix-projections #-}
 {-# OPTIONS --rewriting #-}
 
-open import Data.Unit using (⊤)
-open import Data.Product using (∃; _×_; _,_; proj₁; proj₂; curry)
-
-open import Function using (id; _∘_; _∘′_)
-
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; cong)
-
+open import Library
 import SimpleTypes
 
 module NBE

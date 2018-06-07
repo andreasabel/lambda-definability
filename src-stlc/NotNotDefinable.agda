@@ -5,14 +5,7 @@
 
 open import Data.Bool.Base
 
-open import Data.Empty using (⊥)
-open import Data.Unit using (⊤)
-open import Data.Product using (∃; _×_; _,_; proj₁; proj₂; curry)
-
-open import Function using (id; _∘_; _∘′_)
-
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; cong; sym)
-
+open import Library
 import SimpleTypes
 import STLCDefinable
 
@@ -68,17 +61,15 @@ not′ : Fun (ε ▷ base bool) (base bool)
 not′ = not ∘′ proj₂
 
 notNotConstantOrProjection : IsConstantOrProjection (ε ▷ base bool) (base bool) not′ → ⊥
-notNotConstantOrProjection (isConstant eq)      with eq (_ , true) (_ , false)
-... | ()
-notNotConstantOrProjection (isProjection vz eq) with cong (λ z → z (_ , true)) eq
-... | ()
+notNotConstantOrProjection (isConstant eq)      = case eq (_ , true) (_ , false) of λ()
+notNotConstantOrProjection (isProjection vz eq) = case cong (λ z → z (_ , true)) eq of λ()
 notNotConstantOrProjection (isProjection (STLCDefinable.vs ()) eq)
 
 -- "Being constant or a projection" is a valid Kripke logical predicate at base type.
 -- This amounts to show monotonicity, i.e., closure under composition with projections τ.
 
 NN-Base : STLC-KLP-Base
-STLCDefinable.STLC-KLP-Base.B⟦ NN-Base ⟧ bool Γ f = IsConstantOrProjection Γ _ f
+NN-Base .STLCDefinable.STLC-KLP-Base.B⟦_⟧ bool Γ f = IsConstantOrProjection Γ _ f
 NN-Base .STLCDefinable.STLC-KLP-Base.monB bool τ (isConstant eq) =
   isConstant (λ γ γ' → eq (R⦅ τ ⦆ γ) (R⦅ τ ⦆ γ'))
 NN-Base .STLCDefinable.STLC-KLP-Base.monB bool τ (isProjection x refl) =

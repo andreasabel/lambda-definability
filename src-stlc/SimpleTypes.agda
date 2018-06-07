@@ -4,14 +4,7 @@
 {-# OPTIONS --postfix-projections #-}
 {-# OPTIONS --rewriting #-}
 
-open import Data.Unit using (⊤)
-open import Data.Product using (∃; _×_; _,_; proj₁; proj₂; curry)
-
-open import Function using (id; _∘_; _∘′_)
-
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; cong)
-
-{-# BUILTIN REWRITE _≡_ #-}
+open import Library
 
 module SimpleTypes (Base : Set) (B⦅_⦆ : Base → Set) where
 
@@ -61,20 +54,7 @@ Fun Γ T = C⦅ Γ ⦆ → T⦅ T ⦆
 CFun : (Δ Γ : Cxt) → Set
 CFun Δ Γ = C⦅ Δ ⦆ → C⦅ Γ ⦆
 
--- Application (S-combinator)
-
-apply : ∀{A B C : Set} (f : C → A → B) (d : C → A) → C → B
-apply f a = λ c → f c (a c)
-
--- Kripke application
-
-kapp : ∀{A B C D : Set} (f : C → A → B) (τ : D → C) (a : D → A) → D → B
-kapp f τ a = λ d → f (τ d) (a d)
-
 -- Arity functors: interpretation of OPE as functions
-
-_×̇_ : ∀{A B C D : Set} → (A → C) → (B → D) → A × B → C × D
-(f ×̇ g) (x , y) = f x , g y
 
 Mor : ∀{Γ Δ} (τ : Δ ≤ Γ) → Set
 Mor {Γ} {Δ} τ = C⦅ Δ ⦆ → C⦅ Γ ⦆

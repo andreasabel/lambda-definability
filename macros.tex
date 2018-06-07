@@ -267,6 +267,14 @@
 % Machines
 \newcommand{\mstate}[4]{\heapcol{#1}^{\tmuse{#2}} \Vdash \tmcol{#3} \app \tmcol{#4}}
 
+% OPEs
+\newcommand{\tweak}{\mathsf{weak}}
+\newcommand{\weak}[1][]{\tweak_{#1}\,}
+\newcommand{\tlift}{\mathsf{lift}}
+\newcommand{\lift}[1][]{\tlift_{#1}\,}
+
+\newcommand{\tcurry}{\mathsf{curry}}
+\newcommand{\curry}{\tcurry\;}
 
 % ICFP 2017 paper
 
@@ -614,7 +622,7 @@
 \newcommand{\esubst}[1]{#1\,}
 %\renewcommand{\inst}[2]{#1{\sg{#2}}}
 %\renewcommand{\inst}[2]{\esubst{#1}{\sg{#2}}}
-\newcommand{\lift}[1]{\esubst{#1}\slift}
+%\newcommand{\lift}[1]{\esubst{#1}\slift}
 \newcommand{\clm}[1]{\underline\lambda #1}
 \newcommand{\clos}[1]{(\underline\lambda #1)}
 % closure forming (instead of \dent)
@@ -798,6 +806,7 @@
 \newcommand{\Quant}{\mathsf{Quant}}
 \newcommand{\Sort}{\mathsf{Sort}}
 \newcommand{\tkind}{\Box}
+\newcommand{\Base}{\mathsf{Base}}
 \newcommand{\Ty}{\mathsf{Ty}}
 \newcommand{\Exp}{\mathsf{Exp}}
 \newcommand{\Ann}{\mathsf{Ann}}
@@ -829,13 +838,15 @@
 \newcommand{\FVar}{\mathsf{FVar}}
 \newcommand{\tVar}{\mathsf{Var}}
 \newcommand{\Var}[2]{\tVar(#1 \vdash #2)}
-\newcommand{\Ne}{\mathsf{Ne}}
+\newcommand{\tNe}{\mathsf{Ne}}
+\newcommand{\Ne}[2]{\tNe\;#1\;#2}
 \newcommand{\NeExp}{\mathsf{NeExp}}
 \newcommand{\Null}{\emptyset}
 \newcommand{\Unit}{()}
 \newcommand{\NeUnit}{\Ne^{()}}
 \newcommand{\DNe}{\mathsf{DNe}}
-\newcommand{\Nf}{\mathsf{Nf}}
+\newcommand{\tNf}{\mathsf{Nf}}
+\newcommand{\Nf}[2]{\tNf\;#1\;#2}
 \newcommand{\DNf}{\mathsf{DNf}}
 \newcommand{\Neut}{\mathsf{Neut}}
 \newcommand{\Norm}{\mathsf{Norm}}
@@ -1659,7 +1670,9 @@
   \end{figure*}%
 }
 
+%
+
 %%% Local Variables:
 %%% mode: latex
-%%% TeX-master: "lf-definability"
+%%% TeX-master: "talkAIM27"
 %%% End:

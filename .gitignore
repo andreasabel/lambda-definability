@@ -5,6 +5,11 @@
 *.bbl
 *.blg
 *.log
+*.nav
+*.out
 *.pdf
+*.snm
+*.toc
 all.bib
 medium.bib
+/src-stlc/latex/agda.sty

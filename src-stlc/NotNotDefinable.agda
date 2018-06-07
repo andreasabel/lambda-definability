@@ -68,7 +68,7 @@ not′ : Fun (ε ▷ base bool) (base bool)
 not′ = not ∘′ proj₂
 
 notNotConstantOrProjection : IsConstantOrProjection (ε ▷ base bool) (base bool) not′ → ⊥
-notNotConstantOrProjection (isConstant eq) with eq (_ , true) (_ , false)
+notNotConstantOrProjection (isConstant eq)      with eq (_ , true) (_ , false)
 ... | ()
 notNotConstantOrProjection (isProjection vz eq) with cong (λ z → z (_ , true)) eq
 ... | ()
@@ -80,7 +80,7 @@ notNotConstantOrProjection (isProjection (STLCDefinable.vs ()) eq)
 NN-Base : STLC-KLP-Base
 STLCDefinable.STLC-KLP-Base.B⟦ NN-Base ⟧ bool Γ f = IsConstantOrProjection Γ _ f
 NN-Base .STLCDefinable.STLC-KLP-Base.monB bool τ (isConstant eq) =
-  isConstant (λ γ γ' → eq (Ar τ γ) (Ar τ γ'))
+  isConstant (λ γ γ' → eq (R⦅ τ ⦆ γ) (R⦅ τ ⦆ γ'))
 NN-Base .STLCDefinable.STLC-KLP-Base.monB bool τ (isProjection x refl) =
   isProjection (x w[ τ ]ᵛ) (sym (wk-evalv x τ))
 

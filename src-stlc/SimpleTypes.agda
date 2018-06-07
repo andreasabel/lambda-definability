@@ -76,20 +76,20 @@ kapp f τ a = λ d → f (τ d) (a d)
 _×̇_ : ∀{A B C D : Set} → (A → C) → (B → D) → A × B → C × D
 (f ×̇ g) (x , y) = f x , g y
 
-Mor : ∀{Γ Δ} (E : Δ ≤ Γ) → Set
-Mor {Γ} {Δ} E = C⦅ Δ ⦆ → C⦅ Γ ⦆
+Mor : ∀{Γ Δ} (τ : Δ ≤ Γ) → Set
+Mor {Γ} {Δ} τ = C⦅ Δ ⦆ → C⦅ Γ ⦆
 
-Ar : ∀{Γ Δ} (E : Δ ≤ Γ) → Mor E
-Ar id≤ = id
-Ar (weak E) = Ar E ∘ proj₁
-Ar (lift E) = Ar E ×̇ id
+R⦅_⦆ : ∀{Γ Δ} (τ : Δ ≤ Γ) → Mor τ
+R⦅ id≤    ⦆ = id
+R⦅ weak τ ⦆ = R⦅ τ ⦆ ∘ proj₁
+R⦅ lift τ ⦆ = R⦅ τ ⦆ ×̇ id
 
--- The second functor law for Ar
+-- The second functor law for R⦅_⦆
 
-ar-comp : ∀{Γ Δ Φ} (τ : Δ ≤ Γ) (τ′ : Φ ≤ Δ) → Ar (τ ∙ τ′) ≡ Ar τ ∘′ Ar τ′
-ar-comp τ id≤      = refl
-ar-comp τ (weak τ′) rewrite ar-comp τ τ′ = refl
-ar-comp id≤ (lift τ′) = refl
+ar-comp : ∀{Γ Δ Φ} (τ : Δ ≤ Γ) (τ′ : Φ ≤ Δ) → R⦅ τ ∙ τ′ ⦆ ≡ R⦅ τ ⦆ ∘′ R⦅ τ′ ⦆
+ar-comp τ        id≤      = refl
+ar-comp τ        (weak τ′) rewrite ar-comp τ τ′ = refl
+ar-comp id≤      (lift τ′) = refl
 ar-comp (weak τ) (lift τ′) rewrite ar-comp τ τ′ = refl
 ar-comp (lift τ) (lift τ′) rewrite ar-comp τ τ′ = refl
 
@@ -103,4 +103,4 @@ KPred A = (Γ : Cxt) (f : C⦅ Γ ⦆ → A) → Set
 mon : ∀{A} → KPred A → Set
 mon {A} P = ∀{Γ Δ : Cxt} (τ : Δ ≤ Γ) {f : C⦅ Γ ⦆ → A}
   → (⟦f⟧ : P Γ f)
-  → P Δ (f ∘′ Ar τ)
+  → P Δ (f ∘′ R⦅ τ ⦆)

@@ -10,8 +10,6 @@ open import Function using (id; _∘_; _∘′_)
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; cong)
 
--- {-# BUILTIN REWRITE _≡_ #-}
-
 import SimpleTypes
 
 module STLCDefinable
@@ -35,7 +33,7 @@ module STLC-KLP-Ext (P : STLC-KLP-Base) (open STLC-KLP-Base P) where
   T⟦ U ⇒ T ⟧ Γ f =
     ∀{Δ} (τ : Δ ≤ Γ) {d : Fun Δ U}
     →  (⟦d⟧ : T⟦ U ⟧ Δ d)
-    →  T⟦ T ⟧ Δ (kapp f (Ar τ) d)
+    →  T⟦ T ⟧ Δ (kapp f (R⦅ τ ⦆) d)
 
   monT : ∀ T → mon T⟦ T ⟧
   monT (base b) = monB b
@@ -101,13 +99,13 @@ E⦅ app t u ⦆ = apply E⦅ t ⦆ E⦅ u ⦆
 -- Evaluation of a term t weakened by τ
 -- is the evaluation of t postcomposed with the action of τ.
 
-wk-evalv : ∀{Γ Δ T} (x : Var T Γ) (τ : Δ ≤ Γ) → V⦅ x w[ τ ]ᵛ ⦆ ≡ V⦅ x ⦆ ∘′ Ar τ
+wk-evalv : ∀{Γ Δ T} (x : Var T Γ) (τ : Δ ≤ Γ) → V⦅ x w[ τ ]ᵛ ⦆ ≡ V⦅ x ⦆ ∘′ R⦅ τ ⦆
 wk-evalv x id≤      = refl
 wk-evalv x (weak τ) rewrite wk-evalv x τ = refl
 wk-evalv vz (lift τ) = refl
 wk-evalv (vs x) (lift τ) rewrite wk-evalv x τ = refl
 
-wk-eval : ∀{Γ Δ T} (t : Tm Γ T) (τ : Δ ≤ Γ) → E⦅ t w[ τ ]ᵉ ⦆ ≡ E⦅ t ⦆ ∘′ Ar τ
+wk-eval : ∀{Γ Δ T} (t : Tm Γ T) (τ : Δ ≤ Γ) → E⦅ t w[ τ ]ᵉ ⦆ ≡ E⦅ t ⦆ ∘′ R⦅ τ ⦆
 wk-eval (con c) τ = refl
 wk-eval (var x) τ = wk-evalv x τ
 wk-eval (abs t) τ rewrite wk-eval t (lift τ) = refl
@@ -162,7 +160,7 @@ module Fund (P : STLC-KLP) (open STLC-KLP P) where
   -- Monotonicity of the context-KLP.
   -- This is the only place where we need monotonicity of KLPs.
 
-  monC : ∀ Γ {Δ Φ} (τ : Φ ≤ Δ) {ρ : CFun Δ Γ} (⟦ρ⟧ : C⟦ Γ ⟧ Δ ρ) → C⟦ Γ ⟧ Φ (ρ ∘′ Ar τ)
+  monC : ∀ Γ {Δ Φ} (τ : Φ ≤ Δ) {ρ : CFun Δ Γ} (⟦ρ⟧ : C⟦ Γ ⟧ Δ ρ) → C⟦ Γ ⟧ Φ (ρ ∘′ R⦅ τ ⦆)
   monC ε τ ⟦ρ⟧ = _
   monC (Γ ▷ U) τ ⟦ρ⟧ = monC Γ τ (proj₁ ⟦ρ⟧) , monT U τ (proj₂ ⟦ρ⟧)
 

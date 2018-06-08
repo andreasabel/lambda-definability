@@ -27,7 +27,7 @@ module STLC-KLP-Ext (P : STLC-KLP-Base) (open STLC-KLP-Base P) where
   T⟦ U ⇒ T ⟧ Γ f =
     ∀{Δ} (τ : Δ ≤ Γ) {d : Fun Δ U}
     →  (⟦d⟧ : T⟦ U ⟧ Δ d)
-    →  T⟦ T ⟧ Δ (kapp f (R⦅ τ ⦆) d)
+    →  T⟦ T ⟧ Δ (apply (f ∘′ R⦅ τ ⦆) d)
 
   monT : ∀ T → mon T⟦ T ⟧
   monT (base b) = monB b

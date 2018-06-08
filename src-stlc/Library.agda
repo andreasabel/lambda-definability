@@ -17,8 +17,3 @@ _×̇_ : ∀{A B C D : Set} → (A → C) → (B → D) → A × B → C × D
 
 apply : ∀{A B C : Set} (f : C → A → B) (d : C → A) → C → B
 apply f a = λ c → f c (a c)
-
--- Kripke application
-
-kapp : ∀{A B C D : Set} (f : C → A → B) (τ : D → C) (a : D → A) → D → B
-kapp f τ a = λ d → f (τ d) (a d)

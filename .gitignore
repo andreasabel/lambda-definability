@@ -12,4 +12,5 @@
 *.toc
 all.bib
 medium.bib
-/src-stlc/latex/agda.sty
+/src-stlc/latex/
+/src-stlc/html/

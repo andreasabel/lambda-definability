@@ -1,4 +1,12 @@
--- A term model yielding normalization
+-- Simply-typed lambda definability and normalization by evaluation
+-- formalized in Agda
+--
+-- Author: Andreas Abel, May/June 2018
+
+-- 3. Adapting reflection/reification to obtain normalization
+
+-- The proof of reflection and reification does not introduce β-redexes,
+-- thus, we can strengthen it to work on β-normal forms.
 
 {-# OPTIONS --postfix-projections #-}
 {-# OPTIONS --rewriting #-}
@@ -13,14 +21,21 @@ module NBE
 
 open import STLCDefinable Base B⦅_⦆ Const ty c⦅_⦆
 
--- Normal forms
+-- β-normal forms obtained as a restriction of terms.
+-- Uses the auxiliary concept of "neutral" which characterizes
+-- normal eliminations from a variable or constant.
 
 mutual
+
+  -- Neutral are constants and variables and their application to normal forms.
+
   data Neutral : ∀ {Γ T} (t : Tm Γ T) → Set where
     neCon : ∀ {Γ} (c : Const) → Neutral {Γ} (con c)
     neVar : ∀ {Γ T} (x : Var T Γ) → Neutral (var x)
     neApp : ∀ {Γ T U} {t : Tm Γ (U ⇒ T)} {u : Tm Γ U}
       (ne : Neutral t) (nf : Normal u) → Neutral (app t u)
+
+  -- A normal form is a neutral unter a prefix of λ-abstractions.
 
   data Normal {Γ} : ∀ {T} (t : Tm Γ T) → Set where
     nfNe  : ∀{T} {t : Tm Γ T} (ne : Neutral t) → Normal t
@@ -38,7 +53,7 @@ mutual
   wkNf (nfNe  ne) τ = nfNe (wkNe ne τ)
   wkNf (nfAbs nf) τ = nfAbs (wkNf nf _)
 
--- A syntactical klp: being the image of a normal form
+-- A syntactical KLP: being the image of a normal form.
 
 record NeImg Γ T (f : Fun Γ T) : Set where
   constructor neImg; field
@@ -52,17 +67,24 @@ record NfImg Γ T (f : Fun Γ T) : Set where
     nf  : Normal t
     eq  : E⦅ t ⦆ ≡ f
 
+-- Derived constructors of NfImg.
+
 neImgToNf : ∀{Γ T f} → NeImg Γ T f → NfImg Γ T f
 neImgToNf (neImg ne eq) = nfImg (nfNe ne) eq
 
 nfImgAbs : ∀{Γ T U f} → NfImg (Γ ▷ U) T f → NfImg Γ (U ⇒ T) (curry f)
 nfImgAbs (nfImg nf ⦅nf⦆≡f) = nfImg (nfAbs nf) (cong curry ⦅nf⦆≡f)
 
+-- A Kripke model of images of normal forms.
+-- At base type, a normal form is necessarily neutral.
+
 NfKLP-Base : STLC-KLP-Base
 NfKLP-Base .STLC-KLP-Base.B⟦_⟧ b Γ f                    =  NeImg Γ (base b) f
 NfKLP-Base .STLC-KLP-Base.monB b τ (neImg {t} ne refl)  =  neImg (wkNe ne τ) (wk-eval t τ)
 
 -- Reflection / reification
+
+-- This time, the proof also maintains witnesses of neutrality / normality.
 
 module _ (open STLC-KLP-Ext NfKLP-Base) where
   mutual
@@ -88,9 +110,9 @@ idEnv : ∀ Γ → C⟦ Γ ⟧ Γ id
 idEnv ε = _
 idEnv (Γ ▷ U) = monC Γ (weak id≤) (idEnv Γ) , reflectNe U (neVar vz)
 
+-- Normalization by evaluation
+
+-- For every well-typed term, we obtain a normal form with the same denotation.
+
 nbe : ∀{Γ T} (t : Tm Γ T) → NfImg Γ T E⦅ t ⦆
 nbe t = reifyNf _ (fund t (idEnv _))
-
--- -}
-
--- -}

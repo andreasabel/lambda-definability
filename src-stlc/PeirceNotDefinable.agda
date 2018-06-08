@@ -1,3 +1,10 @@
+-- Simply-typed lambda definability and normalization by evaluation
+-- formalized in Agda
+--
+-- Author: Andreas Abel, May/June 2018
+
+-- 4. Using Kripke predicates to refute STLC-definability of an inhabitant of Peirce's formula.
+
 -- There is no λ-definable function in the Peirce type ((A → B) → A) → A
 
 {-# OPTIONS --postfix-projections #-}
@@ -9,12 +16,7 @@ import STLCDefinable
 
 module PeirceNotDefinable where
 
--- Dependent ⊥-elim
-
-⊥-elim′ : ∀ {a} {A : ⊥ → Set a} (x : ⊥) → A x
-⊥-elim′ ()
-
--- We consider the Peirce formula over two "empty" base types
+-- We consider the Peirce formula over two "empty" base types:
 
 data Base : Set where
   a b : Base
@@ -40,9 +42,6 @@ B = base b
 IsProjection : ∀ Γ T (f : Fun Γ T) → Set
 IsProjection Γ T f = ∃ λ (x : Var T Γ) → f ≡ V⦅ x ⦆
 
-no-proj-from-ε : ∀ T {f : Fun ε T} (p : IsProjection ε T f) → ⊥
-no-proj-from-ε _ (() , _)
-
 NP-Base : STLC-KLP-Base
 NP-Base .STLC-KLP-Base.B⟦_⟧ a Γ f = IsProjection Γ A f
 NP-Base .STLC-KLP-Base.B⟦_⟧ b Γ f = ⊥  -- b is always empty
@@ -55,15 +54,12 @@ NP .STLCDefinable.STLC-KLP.satC ()
 
 Peirce = ((A ⇒ B) ⇒ A) ⇒ A
 
--- Theorem: the Peirce type is not inhabited in STLC
+-- Lemma: Cannot project anything from the empty context.
 
-thm : ∀ f → STLC-definable ε Peirce f → ⊥
-thm f def = no-proj-from-ε A (def NP id≤ (λ τ ⟦d⟧ → lem ⟦d⟧))
-  where
-  -- Lemma: T⟦ A ⇒ B ⟧ Δ is false.
-  open STLC-KLP NP
-  lem : ∀ {Δ d} → T⟦ A ⇒ B ⟧ Δ d → ∀{X : Set} → X
-  lem ⟦d⟧ = case ⟦d⟧ (weak id≤) (vz , refl) of λ()
+no-proj-from-ε : ∀ T {f : Fun ε T} (p : IsProjection ε T f) → ⊥
+no-proj-from-ε _ (() , _)
+
+-- Theorem: the Peirce type is not inhabited in STLC.
 
 -- The argument runs just like the Kripke countermodel for Peirce in IPL.
 
@@ -72,6 +68,16 @@ thm f def = no-proj-from-ε A (def NP id≤ (λ τ ⟦d⟧ → lem ⟦d⟧))
 
 -- Proof: Suppose ⟦ Pierce ⟧ ε and derive a contradiction.
 -- Since ⟦ A ⟧ ε is false ("no-proj-from-ε A"), it is sufficient to show ⟦ (A → B) → A ⟧ ε.
--- Assume τ : Δ ≤ ε and ⟦ A → B ⟧ Δ.  We show ⟦ A ⟧ Δ by absurdity of ⟦ A → B ⟧ Δ.
+-- Assume τ : Δ ≤ ε and ⟦ A → B ⟧ Δ.  We show ⟦ A ⟧ Δ by absurdity of ⟦ A → B ⟧ Δ ("lemma").
 -- To this end, note that ⟦ A ⟧ (Δ.A) holds while ⟦ B ⟧ (Δ.A) is false (irrespective of Δ).
--- QED
+
+thm : ∀ f → STLC-definable ε Peirce f → ⊥
+thm f def = no-proj-from-ε A (def NP id≤ (λ τ ⟦d⟧ → lemma ⟦d⟧))
+  where
+  open STLC-KLP NP
+
+  -- Lemma: T⟦ A ⇒ B ⟧ Δ is always false.
+  lemma : ∀ {Δ d} → T⟦ A ⇒ B ⟧ Δ d → ∀{X : Set} → X
+  lemma ⟦d⟧ = case ⟦d⟧ (weak id≤) (vz , refl) of λ()
+
+-- Q.E.D.

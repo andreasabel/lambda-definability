@@ -1,3 +1,12 @@
+-- Simply-typed lambda definability and normalization by evaluation
+-- formalized in Agda
+--
+-- Author: Andreas Abel, May/June 2018
+
+-- 0. Standard library imports and auxiliary definitions
+
+-- We use Agda's rewriting facility to automatically apply proven equalities.
+
 {-# OPTIONS --rewriting #-}
 
 module Library where
@@ -9,6 +18,8 @@ open import Function                              public using (id; _∘_; _∘�
 open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; sym)
 
 {-# BUILTIN REWRITE _≡_ #-}
+
+-- Product of functions
 
 _×̇_ : ∀{A B C D : Set} → (A → C) → (B → D) → A × B → C × D
 (f ×̇ g) (x , y) = f x , g y

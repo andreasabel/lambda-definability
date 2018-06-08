@@ -1,11 +1,16 @@
--- Negation is not STLC-definable
+-- Simply-typed lambda definability and normalization by evaluation
+-- formalized in Agda
+--
+-- Author: Andreas Abel, May/June 2018
+
+-- 4a. Using Kripke predicates to refute STLC-definability of boolean negation.
 
 {-# OPTIONS --postfix-projections #-}
 {-# OPTIONS --rewriting #-}
 
 open import Data.Bool.Base
-
 open import Library
+
 import SimpleTypes
 import STLCDefinable
 
@@ -45,15 +50,9 @@ open STLCDefinable Base B⦅_⦆ Const ty c⦅_⦆
 -- This seems to be the most economic definition.
 -- A direct definition by induction on the context would look very similar.
 
--- IsConstant : ∀{Γ T} (f : Fun Γ T) → Set
--- IsConstant f = ∀ γ γ' → f γ ≡ f γ'
-
--- IsProjection : ∀{Γ T} (f : Fun Γ T) → Set
--- IsProjection {Γ} {T} f = ∃ λ (x : Var T Γ) → f ≡ V⦅ x ⦆
-
 data IsConstantOrProjection Γ T (f : Fun Γ T) : Set where
-  isConstant : (eq : ∀ γ γ' → f γ ≡ f γ') → IsConstantOrProjection Γ T f
-  isProjection :  (x : Var T Γ) (eq : f ≡ V⦅ x ⦆) → IsConstantOrProjection Γ T f
+  isConstant   : (eq : ∀ γ γ' → f γ ≡ f γ')      → IsConstantOrProjection Γ T f
+  isProjection : (x : Var T Γ) (eq : f ≡ V⦅ x ⦆) → IsConstantOrProjection Γ T f
 
 -- Negation is neither constant nor a projection from the singleton context (x:bool).
 
@@ -87,3 +86,5 @@ NN .STLCDefinable.STLC-KLP.satC false = isConstant (λ _ _ → refl)
 
 thm : STLC-definable (ε ▷ base bool) (base bool) not′ → ⊥
 thm def = notNotConstantOrProjection (def NN)
+
+-- Q.E.D.

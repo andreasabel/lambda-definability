@@ -1,10 +1,18 @@
--- Simple types and contexts and their interpretation
--- Kripke predicate basics
+-- Simply-typed lambda definability and normalization by evaluation
+-- formalized in Agda
+--
+-- Author: Andreas Abel, May/June 2018
+
+-- 1. A universe of simple types; contexts and order-preserving embeddings
+
+-- 1a. Simple types and contexts and their interpretation
 
 {-# OPTIONS --postfix-projections #-}
 {-# OPTIONS --rewriting #-}
 
 open import Library
+
+-- We parametrize our universe of types by a set of base types and their interpretation.
 
 module SimpleTypes (Base : Set) (B⦅_⦆ : Base → Set) where
 
@@ -20,12 +28,14 @@ data Cxt : Set where
   ε : Cxt
   _▷_ : (Γ : Cxt) (U : Ty) → Cxt
 
--- Order-preserving embeddings
+-- Order-preserving embeddings (OPEs)
 
 data _≤_ : (Γ Δ : Cxt) → Set where
   id≤  : ∀{Γ} → Γ ≤ Γ
   weak : ∀{Γ Δ U} (τ : Γ ≤ Δ) → (Γ ▷ U) ≤ Δ
   lift : ∀{Γ Δ U} (τ : Γ ≤ Δ) → (Γ ▷ U) ≤ (Δ ▷ U)
+
+-- Composition of OPEs: Makes the category of contexts and OPEs.
 
 _∙_ : ∀{Γ Δ Φ} (τ : Δ ≤ Γ) (τ′ : Φ ≤ Δ) → Φ ≤ Γ
 τ      ∙ id≤ = τ
@@ -34,11 +44,13 @@ id≤    ∙ lift τ′ = lift τ′
 weak τ ∙ lift τ′ = weak (τ ∙ τ′)
 lift τ ∙ lift τ′ = lift (τ ∙ τ′)
 
+-- The empty context is the terminal object.
+
 ≤ε : ∀ Γ → Γ ≤ ε
 ≤ε ε        = id≤
 ≤ε (Γ ▷ U)  = weak (≤ε Γ)
 
--- Interpretation of types
+-- Interpretation of types and contexts.
 
 T⦅_⦆ : Ty → Set
 T⦅ base b ⦆ = B⦅ b ⦆
@@ -54,12 +66,10 @@ Fun Γ T = C⦅ Γ ⦆ → T⦅ T ⦆
 CFun : (Δ Γ : Cxt) → Set
 CFun Δ Γ = C⦅ Δ ⦆ → C⦅ Γ ⦆
 
--- Arity functors: interpretation of OPE as functions
+-- Interpretation of OPE as projections
+-- (called "arity functor" in Jung/Tiuryn TLCA 1993).
 
-Mor : ∀{Γ Δ} (τ : Δ ≤ Γ) → Set
-Mor {Γ} {Δ} τ = C⦅ Δ ⦆ → C⦅ Γ ⦆
-
-R⦅_⦆ : ∀{Γ Δ} (τ : Δ ≤ Γ) → Mor τ
+R⦅_⦆ : ∀{Γ Δ} (τ : Δ ≤ Γ) → C⦅ Δ ⦆ → C⦅ Γ ⦆
 R⦅ id≤    ⦆ = id
 R⦅ weak τ ⦆ = R⦅ τ ⦆ ∘ proj₁
 R⦅ lift τ ⦆ = R⦅ τ ⦆ ×̇ id
@@ -75,12 +85,16 @@ ar-comp (lift τ) (lift τ′) rewrite ar-comp τ τ′ = refl
 
 {-# REWRITE ar-comp #-}
 
--- Kripke predicate
+-- 1b. Kripke predicate basics
+
+-- Kripke predicate over the world of contexts and OPEs.
 
 KPred : (A : Set) → Set₁
 KPred A = (Γ : Cxt) (f : C⦅ Γ ⦆ → A) → Set
 
-mon : ∀{A} → KPred A → Set
-mon {A} P = ∀{Γ Δ : Cxt} (τ : Δ ≤ Γ) {f : C⦅ Γ ⦆ → A}
+-- Statement of monotonicity of a Kripke predicate.
+
+Mon : ∀{A} → KPred A → Set
+Mon {A} P = ∀{Γ Δ : Cxt} (τ : Δ ≤ Γ) {f : C⦅ Γ ⦆ → A}
   → (⟦f⟧ : P Γ f)
   → P Δ (f ∘′ R⦅ τ ⦆)

@@ -25,7 +25,7 @@ module STLCDefinable
 record STLC-KLP-Base : Set₁ where
   field
     B⟦_⟧  : (b : Base) → KPred B⦅ b ⦆
-    monB  : (b : Base) → mon B⟦ b ⟧
+    monB  : (b : Base) → Mon B⟦ b ⟧
 
 -- Kripke logical predicate over the world of context embeddings.
 
@@ -44,7 +44,7 @@ module STLC-KLP-Ext (P : STLC-KLP-Base) (open STLC-KLP-Base P) where
   -- Thus, the monotonicity proof is a simple case distinction
   -- between base types and function types (no induction).
 
-  monT : ∀ T → mon T⟦ T ⟧
+  monT : ∀ T → Mon T⟦ T ⟧
   monT (base b) = monB b
   monT (U ⇒ T) τ ⟦f⟧ τ′ ⟦d⟧ = ⟦f⟧ (τ ∙ τ′) ⟦d⟧  -- needs REWRITE ar-comp
 

@@ -14,3 +14,6 @@ all.bib
 medium.bib
 /src-stlc/latex/
 /src-stlc/html/
+/src-lf/Bug-Cannot-Intro-Abbrev.agda
+/src-lf/Bug-Name-Clash.agda
+/src-lf/Bug-Rewrite.agda

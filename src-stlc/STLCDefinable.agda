@@ -40,7 +40,7 @@ module STLC-KLP-Ext (P : STLC-KLP-Base) (open STLC-KLP-Base P) where
     ∀{Δ} (τ : Δ ≤ Γ) {d : Fun Δ U}
     →  (⟦d⟧ : T⟦ U ⟧ Δ d)
     →  T⟦ T ⟧ Δ (apply (f ∘′ R⦅ τ ⦆) d)
-  T⟦ prod U T ⟧ Γ p = T⟦ U ⟧ Γ (proj₁ ∘′ p) × T⟦ T ⟧ Γ (proj₂ ∘′ p)
+  T⟦ U ×̂ T ⟧ Γ p = T⟦ U ⟧ Γ (proj₁ ∘′ p) × T⟦ T ⟧ Γ (proj₂ ∘′ p)
 
   -- Thus, the monotonicity proof is a simple case distinction
   -- between base types and function types (no induction).
@@ -50,7 +50,7 @@ module STLC-KLP-Ext (P : STLC-KLP-Base) (open STLC-KLP-Base P) where
   monT (U ⇒ T) τ ⟦f⟧ τ′ ⟦d⟧ = ⟦f⟧ (τ ∙ τ′) ⟦d⟧  -- needs REWRITE ar-comp
 
 -- A Kripke logical predicate needs to satisfy all constants.
-  monT (prod U T) {Γ} {Δ} τ {f} ( ⟦u⟧ , ⟦t⟧ ) = monT U τ ⟦u⟧ , monT T τ ⟦t⟧
+  monT (U ×̂ T) {Γ} {Δ} τ {f} ( ⟦u⟧ , ⟦t⟧ ) = monT U τ ⟦u⟧ , monT T τ ⟦t⟧
 
 record STLC-KLP : Set₁ where
   field
@@ -81,13 +81,13 @@ data Var (T : Ty) : (Γ : Cxt) → Set where
 -- Well-typed terms over the set Const of constants.
 
 data Tm (Γ : Cxt) : (T : Ty) → Set where
-  con : (c : Const) → Tm Γ (ty c)
-  var : ∀{T}   (x : Var T Γ) → Tm Γ T
-  abs : ∀{U T} (t : Tm (Γ ▷ U) T) → Tm Γ (U ⇒ T)
-  app : ∀{U T} (t : Tm Γ (U ⇒ T)) (u : Tm Γ U) → Tm Γ T
-  pair : ∀{U T} (u : Tm Γ U) → (t : Tm Γ T) → Tm Γ (prod U T)
-  fst : ∀{U T} (x : Tm Γ (prod U T)) → Tm Γ U
-  snd : ∀{U T} (x : Tm Γ (prod U T)) → Tm Γ T
+  con  : (c : Const) → Tm Γ (ty c)
+  var  : ∀{T}   (x : Var T Γ) → Tm Γ T
+  abs  : ∀{U T} (t : Tm (Γ ▷ U) T) → Tm Γ (U ⇒ T)
+  app  : ∀{U T} (t : Tm Γ (U ⇒ T)) (u : Tm Γ U) → Tm Γ T
+  pair : ∀{U T} (u : Tm Γ U) (t : Tm Γ T) → Tm Γ (U ×̂ T)
+  fst  : ∀{U T} (t : Tm Γ (U ×̂ T)) → Tm Γ U
+  snd  : ∀{U T} (t : Tm Γ (U ×̂ T)) → Tm Γ T
 
 -- Weakening with an OPE.
 
@@ -98,13 +98,13 @@ vz   w[ lift τ ]ᵛ = vz
 vs x w[ lift τ ]ᵛ = vs (x w[ τ ]ᵛ)
 
 _w[_]ᵉ : ∀{Γ Δ T} (t : Tm Γ T) (τ : Δ ≤ Γ) → Tm Δ T
-con c   w[ τ ]ᵉ = con c
-var x   w[ τ ]ᵉ = var (x w[ τ ]ᵛ)
-abs t   w[ τ ]ᵉ = abs (t w[ lift τ ]ᵉ)
-app t u w[ τ ]ᵉ = app (t w[ τ ]ᵉ) (u w[ τ ]ᵉ)
+con c    w[ τ ]ᵉ = con c
+var x    w[ τ ]ᵉ = var (x w[ τ ]ᵛ)
+abs t    w[ τ ]ᵉ = abs (t w[ lift τ ]ᵉ)
+app t u  w[ τ ]ᵉ = app (t w[ τ ]ᵉ) (u w[ τ ]ᵉ)
 pair u t w[ τ ]ᵉ = pair (u w[ τ ]ᵉ) (t w[ τ ]ᵉ)
-fst x w[ τ ]ᵉ = fst (x w[ τ ]ᵉ)
-snd x w[ τ ]ᵉ = snd (x w[ τ ]ᵉ)
+fst t    w[ τ ]ᵉ = fst (t w[ τ ]ᵉ)
+snd t    w[ τ ]ᵉ = snd (t w[ τ ]ᵉ)
 
 -- Evaluation of variables and expressions
 
@@ -113,13 +113,13 @@ V⦅ vz ⦆   = proj₂
 V⦅ vs x ⦆ = V⦅ x ⦆ ∘′ proj₁
 
 E⦅_⦆ : ∀{Γ T} → Tm Γ T → Fun Γ T
-E⦅ con c ⦆ _ = c⦅ c ⦆
-E⦅ var x ⦆   = V⦅ x ⦆
-E⦅ abs t ⦆   = curry E⦅ t ⦆
-E⦅ app t u ⦆ = apply E⦅ t ⦆ E⦅ u ⦆
-E⦅ pair u t ⦆ ρ = (E⦅ u ⦆ ρ) , (E⦅ t ⦆ ρ)
-E⦅ fst x ⦆ ρ = proj₁ (E⦅ x ⦆ ρ)
-E⦅ snd x ⦆ ρ = proj₂ (E⦅ x ⦆ ρ)
+E⦅ con c ⦆ _  = c⦅ c ⦆
+E⦅ var x ⦆    = V⦅ x ⦆
+E⦅ abs t ⦆    = curry E⦅ t ⦆
+E⦅ app t u ⦆  = apply E⦅ t ⦆ E⦅ u ⦆
+E⦅ pair u t ⦆ = < E⦅ u ⦆ , E⦅ t ⦆ >
+E⦅ fst t ⦆    = proj₁ ∘ E⦅ t ⦆
+E⦅ snd t ⦆    = proj₂ ∘ E⦅ t ⦆
 
 -- Evaluation of a term t weakened by τ
 -- is the evaluation of t postcomposed with the action of τ.
@@ -131,13 +131,13 @@ wk-evalv vz     (lift τ) = refl
 wk-evalv (vs x) (lift τ) rewrite wk-evalv x τ = refl
 
 wk-eval : ∀{Γ Δ T} (t : Tm Γ T) (τ : Δ ≤ Γ) → E⦅ t w[ τ ]ᵉ ⦆ ≡ E⦅ t ⦆ ∘′ R⦅ τ ⦆
-wk-eval (con c)   τ = refl
-wk-eval (var x)   τ = wk-evalv x τ
-wk-eval (abs t)   τ rewrite wk-eval t (lift τ) = refl
-wk-eval (app t u) τ rewrite wk-eval t τ | wk-eval u τ = refl
+wk-eval (con c)    τ = refl
+wk-eval (var x)    τ = wk-evalv x τ
+wk-eval (abs t)    τ rewrite wk-eval t (lift τ) = refl
+wk-eval (app t u)  τ rewrite wk-eval t τ | wk-eval u τ = refl
 wk-eval (pair u t) τ rewrite wk-eval u τ | wk-eval t τ = refl
-wk-eval (fst x) τ rewrite wk-eval x τ = refl
-wk-eval (snd x) τ rewrite wk-eval x τ = refl
+wk-eval (fst t)    τ rewrite wk-eval t τ = refl
+wk-eval (snd t)    τ rewrite wk-eval t τ = refl
 
 {-# REWRITE wk-eval #-}
 
@@ -157,9 +157,6 @@ TmKLP-Base .STLC-KLP-Base.monB b τ (t , refl)  = t w[ τ ]ᵉ , wk-eval t τ
 -- We can reify a term from an element of the Kripke model.
 
 -- These two lemmata are proven simultaneously by induction on the type.
--- I use this variant of subst to avoid the jungle of implicit arguments
-subst' : {A : Set} (P : A → Set) (x y : A) → x ≡ y → P x → P y
-subst' P x y refl p = p
 
 module _ (open STLC-KLP-Ext TmKLP-Base) where
   mutual
@@ -168,18 +165,16 @@ module _ (open STLC-KLP-Ext TmKLP-Base) where
     reflect (base b) t = t , refl
     reflect (U ⇒ T) t τ ⟦d⟧ with reify U ⟦d⟧
     reflect (U ⇒ T) t τ ⟦d⟧ | u , refl = reflect T (app (t w[ τ ]ᵉ) u) -- REWRITE wk-eval
-    reflect (prod U T) x = reflect U (fst x) , reflect T (snd x)
+    reflect (U ×̂ T) t = reflect U (fst t) , reflect T (snd t)
 
     reify : ∀{Γ} T {f : Fun Γ T} (⟦f⟧ : T⟦ T ⟧ Γ f) → TmImg Γ T f
     reify (base b) ⟦f⟧ = ⟦f⟧
     reify (U ⇒ T) ⟦f⟧ with reify T (⟦f⟧ (weak id≤) {proj₂} (reflect U (var vz)))
     ... | t , ⦅t⦆≡uncurryf = abs t , cong curry ⦅t⦆≡uncurryf
+    reify (U ×̂ T) ⟦f⟧ with reify U (proj₁ ⟦f⟧) | reify T (proj₂ ⟦f⟧)
+    ... | u , ⦅u⦆≡proj₁∘f | t , ⦅t⦆≡proj₂∘f = pair u t , cong₂ <_,_> ⦅u⦆≡proj₁∘f ⦅t⦆≡proj₂∘f
 
 -- Reflection witnesses that the constants satisfy the corresponding Kripke predicate.
-    reify (prod U T) {f} ⟦f⟧ with (reify U {proj₁ ∘′ f} (proj₁ ⟦f⟧)) , (reify T {proj₂ ∘′ f} (proj₂ ⟦f⟧))
-    ...                     | (u , p) , (t , q) = let hlp : (λ ρ → proj₁ (f ρ) , E⦅ t ⦆ ρ) ≡ f
-                                                      hlp = subst' (λ x → (λ ρ → proj₁ (f ρ) , x ρ) ≡ f) (λ ρ → proj₂ (f ρ)) E⦅ t ⦆ (sym q) refl
-                                                  in pair u t , subst' (λ x → (λ ρ → x ρ , E⦅ t ⦆ ρ) ≡ f) (λ ρ → proj₁ (f ρ)) E⦅ u ⦆ (sym p) hlp
 
 TmKLP : STLC-KLP
 TmKLP .STLC-KLP.klp-base = TmKLP-Base
@@ -221,13 +216,13 @@ module Fund (P : STLC-KLP) (open STLC-KLP P) where
   fundv (vs x) ⟦ρ⟧ = fundv x (proj₁ ⟦ρ⟧)
 
   fund : ∀{Γ Δ T} (t : Tm Γ T) {ρ : CFun Δ Γ} (⟦ρ⟧ : C⟦ Γ ⟧ Δ ρ) → T⟦ T ⟧ Δ (E⦅ t ⦆ ∘′ ρ)
-  fund (con c)   ⟦ρ⟧        =  monT (ty c) (≤ε _) (satC c)
-  fund (var x)   ⟦ρ⟧        =  fundv x ⟦ρ⟧
-  fund (abs t)   ⟦ρ⟧ τ ⟦d⟧  =  fund t (monC _ τ ⟦ρ⟧ , ⟦d⟧)  -- Monotonicity used here!
-  fund (app t u) ⟦ρ⟧        =  fund t ⟦ρ⟧ id≤ (fund u ⟦ρ⟧)
-  fund (pair u t) ⟦ρ⟧ = fund u ⟦ρ⟧ , fund t ⟦ρ⟧
-  fund (fst x) ⟦ρ⟧ = proj₁ (fund x ⟦ρ⟧)
-  fund (snd x) ⟦ρ⟧ = proj₂ (fund x ⟦ρ⟧)
+  fund (con c)    ⟦ρ⟧       =  monT (ty c) (≤ε _) (satC c)
+  fund (var x)    ⟦ρ⟧       =  fundv x ⟦ρ⟧
+  fund (abs t)    ⟦ρ⟧ τ ⟦d⟧ =  fund t (monC _ τ ⟦ρ⟧ , ⟦d⟧)  -- Monotonicity used here!
+  fund (app t u)  ⟦ρ⟧       =  fund t ⟦ρ⟧ id≤ (fund u ⟦ρ⟧)
+  fund (pair u t) ⟦ρ⟧       =  fund u ⟦ρ⟧ , fund t ⟦ρ⟧
+  fund (fst t)    ⟦ρ⟧       =  proj₁ (fund t ⟦ρ⟧)
+  fund (snd t)    ⟦ρ⟧       =  proj₂ (fund t ⟦ρ⟧)
 
 -- Completeness: Every closed term evaluates to a STLC-definable function.
 -- (Does not directly scale to open terms since identity environment does not always exist!)

@@ -20,8 +20,7 @@ module SimpleTypes (Base : Set) (B⦅_⦆ : Base → Set) where
 
 data Ty : Set where
   base : (b : Base) → Ty
-  _⇒_ : (U T : Ty) → Ty
-  prod : Ty -> Ty -> Ty
+  _⇒_ _×̂_ : (U T : Ty) → Ty
 
 -- Typing contexts
 
@@ -56,7 +55,7 @@ lift τ ∙ lift τ′ = lift (τ ∙ τ′)
 T⦅_⦆ : Ty → Set
 T⦅ base b ⦆ = B⦅ b ⦆
 T⦅ U ⇒ T ⦆ = T⦅ U ⦆ → T⦅ T ⦆
-T⦅ prod U T ⦆ = T⦅ U ⦆ × T⦅ T ⦆
+T⦅ U ×̂ T ⦆ = T⦅ U ⦆ × T⦅ T ⦆
 
 C⦅_⦆ : Cxt → Set
 C⦅ ε ⦆ = ⊤

@@ -13,9 +13,9 @@ module Library where
 
 open import Data.Empty                            public using (⊥; ⊥-elim)
 open import Data.Unit                             public using (⊤)
-open import Data.Product                          public using (∃; _×_; _,_; proj₁; proj₂; curry)
+open import Data.Product                          public using (∃; _×_; _,_; proj₁; proj₂; curry; <_,_>)
 open import Function                              public using (id; _∘_; _∘′_; case_of_)
-open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; sym)
+open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; cong₂; sym)
 
 {-# BUILTIN REWRITE _≡_ #-}
 

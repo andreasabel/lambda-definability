@@ -1,7 +1,6 @@
-# Makefile for Sized HOAS
+# Makefile for lf-definability
 # Author : Andreas Abel
-# Created: 2008-05-09, 2010-03-29, 2010-11-23
-# Source : project/normCC/implicit/Makefile
+# Created: 2008-05-09, 2010-03-29, 2010-11-23, 2018-05-xx
 
 destdir=$(HOME)/public_html
 
@@ -26,7 +25,20 @@ bibliography=medium.bib
 
 # stdlib=$(HOME)/agda/std-lib/src
 
+agda=agda-2.6.0
+
 files=lf-definability.tex Makefile macros.tex
+
+stlcagda = \
+  src-stlc/Everything.agda \
+  src-stlc/Library.agda \
+  src-stlc/SimpleTypes.agda \
+  src-stlc/STLCDefinable.agda \
+  src-stlc/NBE.agda \
+  src-stlc/NotNotDefinable.agda \
+  src-stlc/PeirceNotDefinable.agda \
+
+# END stlcagda
 
 .PHONY : all debugMake html
 
@@ -40,16 +52,24 @@ pack : lf-definability.zip
 lf-definability.zip : lf-definability.pdf $(files) jfp1.cls harpoons.sty lf-definability.bbl jfp.bst auto-lf-definability.bib
 	zip $@ $^
 
-html : html/Everything.html
+html : src-stlc/html/Everything.html
 
-html/Everything.html : $(agdafiles)
-	agda --html $<
+src-stlc/html/Everything.html : $(stlcagda)
+	cd src-stlc; $(agda) --html Everything.agda
 
 latex/%.tex : %.lagda
-	agda --latex $<
+	$(agda) --latex $<
 
-talkTYPES18.pdf : talkTYPES18.tex macros.tex latex/MonusDiagError.tex latex/MonusDiag.tex
+talkAIM27.pdf : talkAIM27.tex macros.tex
 	pdflatex $<
+
+ship : shipTalk shipHtml
+
+shipHtml : src-stlc/html/Everything.html
+	cp -pr src-stlc/html $(destdir)/aim27/stlc-definability
+
+shipTalk : talkAIM27.pdf
+	cp -p $< $(destdir)/
 
 # lf-definability
 ##################################################################

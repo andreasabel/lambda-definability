@@ -199,10 +199,10 @@ module Fund (P : STLC-KLP) (open STLC-KLP P) where
   fundv (vs x) ⟦ρ⟧ = fundv x (proj₁ ⟦ρ⟧)
 
   fund : ∀{Γ Δ T} (t : Tm Γ T) {ρ : CFun Δ Γ} (⟦ρ⟧ : C⟦ Γ ⟧ Δ ρ) → T⟦ T ⟧ Δ (E⦅ t ⦆ ∘′ ρ)
-  fund (con c)   ⟦ρ⟧       =  monT (ty c) (≤ε _) (satC c)
-  fund (var x)   ⟦ρ⟧       =  fundv x ⟦ρ⟧
+  fund (con c)   ⟦ρ⟧        =  monT (ty c) (≤ε _) (satC c)
+  fund (var x)   ⟦ρ⟧        =  fundv x ⟦ρ⟧
   fund (abs t)   ⟦ρ⟧ τ ⟦d⟧  =  fund t (monC _ τ ⟦ρ⟧ , ⟦d⟧)  -- Monotonicity used here!
-  fund (app t u) ⟦ρ⟧       =  fund t ⟦ρ⟧ id≤ (fund u ⟦ρ⟧)
+  fund (app t u) ⟦ρ⟧        =  fund t ⟦ρ⟧ id≤ (fund u ⟦ρ⟧)
 
 -- Completeness: Every closed term evaluates to a STLC-definable function.
 -- (Does not directly scale to open terms since identity environment does not always exist!)

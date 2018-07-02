@@ -63,7 +63,7 @@ module Fund (P : LF-KLP) (open LF-KLP P) where
   wk-KLP (dat k i) τ ρ = {!!}  -- Need naturality for F⟦_⟧
   wk-KLP unit τ ρ = refl
   wk-KLP (pi A B) τ ρ = {!!}  -- Need clever "with"
-  {-# REWRITE wk-KLP #-}
+  {-# REWRITE wk-KLP #-}  -- issue #3059, cannot add this as rewrite rule
 
   C⟦_⟧ : (Γ {Δ} : RC) (ρ : RMor Δ Γ) → Set₁
   C⟦ ε ⟧ _ = Lift ⊤

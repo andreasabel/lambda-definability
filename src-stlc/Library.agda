@@ -11,20 +11,61 @@
 
 module Library where
 
+open import Level                                 public using (Level; _⊔_; Lift) renaming (zero to lzero; suc to lsuc)
+
 open import Data.Empty                            public using (⊥; ⊥-elim)
 open import Data.Unit                             public using (⊤)
-open import Data.Product                          public using (∃; _×_; _,_; proj₁; proj₂; curry; <_,_>)
+open import Data.Product                          public using (Σ; ∃; _×_; _,_; proj₁; proj₂; curry; <_,_>)
+open import Data.Sum                              public using (_⊎_; inj₁; inj₂; [_,_])
+
+open import Data.Nat.Base                         public using (ℕ; zero; suc)
+open import Data.Fin                              public using (Fin; zero; suc; _≟_; fromℕ)
+open import Data.Vec                              public using (Vec; []; _∷_; lookup)
+open import Data.W                                public using (sup) renaming (W to 𝕎; map to 𝕎-map)
+
 open import Function                              public using (id; _∘_; _∘′_; case_of_)
-open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; cong₂; sym)
+
+open import Relation.Nullary                      public using (Dec; yes; no)
+open import Relation.Nullary.Decidable            public using (True)
+open import Relation.Binary                       public using (Decidable)
+open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; cong₂; sym; trans)
 
 {-# BUILTIN REWRITE _≡_ #-}
 
--- Product of functions
+-- Binary product of functions
 
 _×̇_ : ∀{A B C D : Set} → (A → C) → (B → D) → A × B → C × D
-(f ×̇ g) (x , y) = f x , g y
+f ×̇ g = < f ∘ proj₁ , g ∘ proj₂ >
+
+-- Binary sum of functions
+
+_+̇_ : ∀{A B C D : Set} (f : A → C) (g : B → D) → A ⊎ B → C ⊎ D
+f +̇ g = [ inj₁ ∘ f , inj₂ ∘ g ]
 
 -- Application (S-combinator)
 
 apply : ∀{A B C : Set} (f : C → A → B) (d : C → A) → C → B
 apply f a = λ c → f c (a c)
+
+module DecRefl {a} {A : Set a} (_≟_ : Decidable (_≡_ {A = A})) where
+
+  ≟-refl : ∀ a → a ≟ a ≡ yes refl
+  ≟-refl a with a ≟ a
+  ≟-refl a | yes refl = refl
+  ≟-refl a | no ¬p = case ¬p refl of λ()
+
+-- module _ {a} {A : Set a} (_≟_ : Decidable (_≡_ {A = A})) {a : A} where
+
+--   ≟-refl : a ≟ a ≡ yes refl
+--   ≟-refl with a ≟ a
+--   ≟-refl | yes refl = refl
+--   ≟-refl | no ¬p = case ¬p refl of λ()
+
+-- {-# REWRITE ≟-refl #-}
+
+-- Path into a 𝕎-tree to a node that satisfies a property.
+-- Similar to the EF operator of CTL.
+
+data EF𝕎 {a b p} {A : Set a} {B : A → Set b} (P : A → Set p) : 𝕎 A B → Set (b ⊔ p) where
+  here  : ∀{x f} (p : P x) → EF𝕎 P (sup x f)
+  there : ∀{x f} (i : B x) (p : EF𝕎 P (f i)) → EF𝕎 P (sup x f)

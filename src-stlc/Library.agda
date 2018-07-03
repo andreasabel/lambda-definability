@@ -28,9 +28,23 @@ open import Function                              public using (id; _∘_; _∘�
 open import Relation.Nullary                      public using (Dec; yes; no)
 open import Relation.Nullary.Decidable            public using (True)
 open import Relation.Binary                       public using (Decidable)
-open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; cong₂; sym; trans)
+open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; cong₂; cong-app; sym; trans; Extensionality)
 
 {-# BUILTIN REWRITE _≡_ #-}
+
+postulate
+  funExt : Extensionality lzero lzero
+
+-- Function extensionality for hidden function
+
+funExtH :
+  {A : Set} {B : A → Set} {f g : {x : A} → B x} →
+  (∀{x} → f {x} ≡ g {x}) → (λ{x} → f {x}) ≡ (λ{x} → g {x})
+funExtH {f = f} {g = g} h = cong (λ f {x} → f x) (funExt {f = λ x → f {x}} {g = λ x → g {x}} (λ x → h {x}))
+
+hcong₂ : ∀ {a b c} {A : Set a} {B : A → Set b} {C : Set c}
+        (f : (x : A) → B x → C) {x y} {u : B x} {v : B y} (p : x ≡ y) → subst B p u ≡ v → f x u ≡ f y v
+hcong₂ f refl refl = refl
 
 -- Binary product of functions
 
@@ -47,12 +61,20 @@ f +̇ g = [ inj₁ ∘ f , inj₂ ∘ g ]
 apply : ∀{A B C : Set} (f : C → A → B) (d : C → A) → C → B
 apply f a = λ c → f c (a c)
 
+-- Kronecker symbol
+
+δ : ∀{n} (i j : Fin n) → Set
+δ i j = True (i ≟ j)
+
 module DecRefl {a} {A : Set a} (_≟_ : Decidable (_≡_ {A = A})) where
 
   ≟-refl : ∀ a → a ≟ a ≡ yes refl
   ≟-refl a with a ≟ a
   ≟-refl a | yes refl = refl
   ≟-refl a | no ¬p = case ¬p refl of λ()
+
+module DecFinRefl {n} = DecRefl {A = Fin n} _≟_
+{-# REWRITE DecFinRefl.≟-refl #-}
 
 -- module _ {a} {A : Set a} (_≟_ : Decidable (_≡_ {A = A})) {a : A} where
 

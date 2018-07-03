@@ -19,12 +19,10 @@ record SPos (I : Set) : Set₁ where
   field
     F    : (ρ : I → Set) → Set
     mon  : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → F ρ'
-    mon-id : ∀{ρ}  → mon {ρ} id ≡ id
 
     Supp : ∀{ρ} (x : F ρ) (i : I) → Set
 
     mon-Supp : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → Supp (mon ρ→ρ' x) →̇ Supp x
-    mon-Supp-id : ∀{ρ} (x : F ρ) → (λ{i} → mon-Supp {ρ} id x {i}) ≡  λ{i} → subst (λ f → Supp (f x) i) (mon-id {ρ})
 
     necc : ∀{ρ} (x : F ρ) → Supp x →̇ ρ
     suff : ∀{ρ} (x : F ρ) → F (Supp x)
@@ -32,18 +30,23 @@ record SPos (I : Set) : Set₁ where
     mon-Supp-suff : ∀{ρ ρ'} (x : F ρ) (supp→ρ' : Supp x →̇ ρ') → Supp (mon supp→ρ' (suff x)) →̇ Supp x
 
 
-    -- laws
-    mon-∙ : ∀ {x y z} {g : y →̇  z} {f : x →̇  y} →
-            ∀ xs → mon {y} {z} g (mon f xs) ≡ mon (g ∘ f) xs
+    -- Laws
 
-    necc-suff : ∀ {ρ} {x : F ρ} →  mon (necc x) (suff x) ≡ x
+    mon-id : ∀{ρ}  → mon {ρ} id ≡ id
+    mon-comp : ∀ {ρ₁ ρ₂ ρ₃} {ρ₂→ρ₃ : ρ₂ →̇  ρ₃} {ρ₁→ρ₂ : ρ₁ →̇  ρ₂} →
+            ∀ x → mon {ρ₂} ρ₂→ρ₃ (mon ρ₁→ρ₂ x) ≡ mon (ρ₂→ρ₃ ∘ ρ₁→ρ₂) x
+
+    mon-Supp-id : ∀{ρ} (x : F ρ) →
+      (λ{i} → mon-Supp {ρ} id x {i}) ≡  λ{i} → subst (λ f → Supp (f x) i) (mon-id {ρ})
+
+    necc-suff : ∀ {ρ} (x : F ρ) →  mon (necc x) (suff x) ≡ x
 
 {-
 
-    mon-Supp-∙ : ∀ {x y z} {g : y → z} {f : x → y} →
+    mon-Supp-comp : ∀ {x y z} {g : y → z} {f : x → y} →
                  ∀ xs → (p : Supp (mon g (mon f xs)))
                  → mon-Supp f xs (mon-Supp g (mon f xs) p)
-                 ≡ mon-Supp (g ∘ f) xs (subst Supp (mon-∙ xs) p)
+                 ≡ mon-Supp (g ∘ f) xs (subst Supp (mon-comp xs) p)
 
 
     necc-nat : ∀{ρ ρ' : Set} → (f : ρ → ρ') → ∀ (xs : F ρ) (p : Supp (mon f xs))
@@ -80,28 +83,32 @@ SP = SPos ∘ Fin
 Var : ∀{n} (i : Fin n) → SP n
 Var i .F ρ = ρ i
 Var i .mon ρ→ρ' x = ρ→ρ' x
-Var i .mon-id = refl
 Var i .Supp _ j = δ i j
 Var i .mon-Supp ρ→ρ' _ = id
-Var i .mon-Supp-id {ρ} x = refl
 Var i .necc x {j} u with i ≟ j
 Var i .necc x {.i} _ | yes refl = x
 Var i .necc x {j} () | no _
 Var i .suff = _ -- rewrite δ-diag i = _
 Var i .mon-Supp-suff x supp→ρ' u = u
+Var i .mon-id = refl
+Var i .mon-comp x = refl
+Var i .mon-Supp-id {ρ} x = refl
+Var i .necc-suff x = refl
 
 -- Constant types have empty support
 
 Const : ∀ (A : Set) {I} → SPos I
 Const A .F _ = A
 Const A .mon _ = id
-Const A .mon-id = refl
 Const A .Supp _ _ = ⊥
 Const A .mon-Supp _ _ = id
-Const A .mon-Supp-id x = refl
 Const A .necc _ ()
 Const A .suff = id
 Const A .mon-Supp-suff _ _ = id
+Const A .mon-id = refl
+Const A .mon-comp x = refl
+Const A .mon-Supp-id x = refl
+Const A .necc-suff x = refl
 
 Empty = Const ⊥
 Unit  = Const ⊤
@@ -125,9 +132,13 @@ Unit  = Const ⊤
 Fun : ∀ (A : Set) {I} (B : SPos I) → SPos I
 Fun A B .F ρ                     = A → B .F ρ
 Fun A B .mon ρ→ρ' f a            = B .mon ρ→ρ' (f a)
-Fun A B .mon-id                 =  funExt λ f → funExt λ a → cong-app (B .mon-id) (f a)
 Fun A B .Supp f i                = ∃ λ (a : A) → B .Supp (f a) i
 Fun A B .mon-Supp ρ→ρ' f (a , u) = a , B .mon-Supp ρ→ρ' (f a) u
+Fun A B .necc f (a , u)          = B .necc (f a) u
+Fun A B .suff f a                = B .mon (a ,_) (B .suff (f a))
+Fun A B .mon-Supp-suff f supp→ρ' (a , u) = a , B .mon-Supp-suff (f a) (λ{i} u → supp→ρ' (a , u)) {!u!}
+Fun A B .mon-id                  = funExt λ f → funExt λ a → cong-app (B .mon-id) (f a)
+Fun A B .mon-comp f              = funExt λ a → B .mon-comp (f a)
 -- Fun A B .mon-Supp-id {ρ} f = funExtH λ{i} →  funExt λ p → {! aux (B .mon {ρ} id) (B .mon-id {ρ})!}
 --   where
 --   aux : ∀ {A I} {B : SPos I} {ρ : I → Set} {f : A → B .F ρ} {i : I}
@@ -167,49 +178,61 @@ Fun A B .mon-Supp-id {ρ} f = funExtH λ{i} →  funExt λ{ (a , u) → {! aux (
 -- Fun A B .mon-Supp-id {ρ} f with B .mon {ρ} id | B .mon-id {ρ} | B .mon-Supp {ρ} id
 -- ... | z | eq | u = {!eq!}
 -- Fun A B .mon-Supp-id {ρ} f rewrite B .mon-id {ρ} = {!!}
-Fun A B .necc f (a , u)          = B .necc (f a) u
-Fun A B .suff f a                = B .mon (a ,_) (B .suff (f a))
-Fun A B .mon-Supp-suff f supp→ρ' (a , u) = a , B .mon-Supp-suff (f a) (λ{i} u → supp→ρ' (a , u)) {!u!}
+Fun A B .necc-suff f = funExt λ a →
+  begin
+  B .mon (Fun A B .necc f) (B .mon (a ,_) (B .suff (f a)))  ≡⟨ B .mon-comp (B .suff (f a)) ⟩
+  B .mon (Fun A B .necc f ∘ (a ,_)) (B .suff (f a))         ≡⟨⟩
+  B .mon (B .necc (f a)) (B .suff (f a))                    ≡⟨ B .necc-suff (f a) ⟩
+  f a                                                       ∎ where open ≡-Reasoning -- {!B .necc-suff!}
 
 Prod : ∀{I} (A B : SPos I) → SPos I
 Prod A B .F ρ                            = A .F ρ × B .F ρ
 Prod A B .mon ρ→ρ' (a , b)               = A .mon ρ→ρ' a , B .mon ρ→ρ' b
-Prod A B .mon-id                         =  cong₂ _×̇_ (A .mon-id) (B .mon-id)
 Prod A B .Supp (a , b) i                 = A .Supp a i ⊎ B .Supp b i
 Prod A B .mon-Supp ρ→ρ' (a , b) (inj₁ u) = inj₁ (A .mon-Supp ρ→ρ' a u)
 Prod A B .mon-Supp ρ→ρ' (a , b) (inj₂ u) = inj₂ (B .mon-Supp ρ→ρ' b u)
-Prod A B .mon-Supp-id {ρ} (a , b) = {!!}
--- Prod A B .mon-Supp-id {ρ} (a , b) rewrite A .mon-id {ρ} = {!!}
 Prod A B .necc (a , b) (inj₁ u)          = A .necc a u
 Prod A B .necc (a , b) (inj₂ u)          = B .necc b u
 Prod A B .suff (a , b)                   = A .mon inj₁ (A .suff a) , B .mon inj₂ (B .suff b)
 Prod A B .mon-Supp-suff (a , b) supp→ρ' (inj₁ u) = inj₁ (A .mon-Supp-suff a (λ{i} u' → supp→ρ' (inj₁ u')) {!!})
 Prod A B .mon-Supp-suff (a , b) supp→ρ' (inj₂ u) = {!!}
+Prod A B .mon-id                         =  cong₂ _×̇_ (A .mon-id) (B .mon-id)
+Prod A B .mon-comp (a , b) = cong₂ _,_ (A .mon-comp a) (B .mon-comp b)
+Prod A B .mon-Supp-id {ρ} (a , b) = {!!}
+-- Prod A B .mon-Supp-id {ρ} (a , b) rewrite A .mon-id {ρ} = {!!}
+Prod A B .necc-suff (a , b) = cong₂ _,_
+  (trans (A .mon-comp (A .suff a)) (A .necc-suff a))
+  (trans (B .mon-comp (B .suff b)) (B .necc-suff b))
 
 Sum : ∀{I} (A B : SPos I) → SPos I
 Sum A B .F ρ                      = A .F ρ ⊎ B .F ρ
 Sum A B .mon ρ→ρ' (inj₁ a)        = inj₁ (A .mon ρ→ρ' a)
 Sum A B .mon ρ→ρ' (inj₂ b)        = inj₂ (B .mon ρ→ρ' b)
-Sum A B .mon-id                   =  funExt λ
-  { (inj₁ a) → cong (λ f → inj₁ (f a)) (A .mon-id)
-  ; (inj₂ b) → cong (λ f → inj₂ (f b)) (B .mon-id)
-  }
--- Sum A B .mon-id (inj₁ a)          = {! cong inj₁ (A .mon-id a) !}
--- Sum A B .mon-id (inj₂ b)          = {! cong inj₂ (B .mon-id b) !}
 Sum A B .Supp (inj₁ a) i          = A .Supp a i
 Sum A B .Supp (inj₂ b) i          = B .Supp b i
 Sum A B .mon-Supp ρ→ρ' (inj₁ a) u = A .mon-Supp ρ→ρ' a u
 Sum A B .mon-Supp ρ→ρ' (inj₂ b) u = B .mon-Supp ρ→ρ' b u
-Sum A B .mon-Supp-id {ρ} (inj₁ a) = {!!}
--- with A .mon {ρ} id | A .mon-id {ρ} | A .mon-Supp id a | A .mon-Supp-id {ρ} a
--- ... | x | y | z | v = {!!}
--- Sum A B .mon-Supp-id {ρ} (inj₁ a) rewrite A .mon-id {ρ} | A .mon-Supp-id {ρ} a = {!!}
 Sum A B .necc (inj₁ a) u          = A .necc a u
 Sum A B .necc (inj₂ b) u          = B .necc b u
 Sum A B .suff (inj₁ a)            = inj₁ (A .suff a)
 Sum A B .suff (inj₂ b)            = inj₂ (B .suff b)
 Sum A B .mon-Supp-suff (inj₁ a) supp→ρ' u = A .mon-Supp-suff a supp→ρ' u
 Sum A B .mon-Supp-suff (inj₂ b) supp→ρ' u = B .mon-Supp-suff b supp→ρ' u
+Sum A B .mon-id                   =  funExt λ
+  { (inj₁ a) → cong (λ f → inj₁ (f a)) (A .mon-id)
+  ; (inj₂ b) → cong (λ f → inj₂ (f b)) (B .mon-id)
+  }
+-- Sum A B .mon-id (inj₁ a)          = {! cong inj₁ (A .mon-id a) !}
+-- Sum A B .mon-id (inj₂ b)          = {! cong inj₂ (B .mon-id b) !}
+Sum A B .mon-comp (inj₁ a) = cong inj₁ (A .mon-comp a)
+Sum A B .mon-comp (inj₂ b) = cong inj₂ (B .mon-comp b)
+Sum A B .mon-Supp-id {ρ} (inj₁ a) = {!!}
+Sum A B .mon-Supp-id {ρ} (inj₂ b) = {!!}
+-- with A .mon {ρ} id | A .mon-id {ρ} | A .mon-Supp id a | A .mon-Supp-id {ρ} a
+-- ... | x | y | z | v = {!!}
+-- Sum A B .mon-Supp-id {ρ} (inj₁ a) rewrite A .mon-id {ρ} | A .mon-Supp-id {ρ} a = {!!}
+Sum A B .necc-suff (inj₁ a) = cong inj₁ (A .necc-suff a)
+Sum A B .necc-suff (inj₂ b) = cong inj₂ (B .necc-suff b)
 
 ext : ∀{ℓ} {A : Set ℓ} {n} (ρ : Fin n → A) (x : A) (i : Fin (suc n)) → A
 ext ρ x zero = x
@@ -274,12 +297,12 @@ Mu A .suff {ρ} (sup x f) = sup (A .mon ζ (A .suff x)) λ p →
       → A .Supp (A .mon (λ {i} → α p i) s) zero
       → A .Supp s                          zero
   β {p} s q = A .mon-Supp-suff s _
-    (subst (λ s → A .Supp s zero) (A .mon-∙ (A .suff s))
-      (subst (λ s → A .Supp (A .mon ((λ {i} → α p i)) s) zero) (sym (A .necc-suff)) q))
+    (subst (λ s → A .Supp s zero) (A .mon-comp (A .suff s))
+      (subst (λ s → A .Supp (A .mon ((λ {i} → α p i)) s) zero) (sym (A .necc-suff s)) q))
   -- β {p} s q = A .mon-Supp-suff s _ q''
   --   where
   --     q' = subst (λ s → A .Supp (A .mon ((λ {i} → α p i)) s) zero) (sym (A .necc-suff)) q
-  --     q'' = subst (λ s → A .Supp s zero) (A .mon-∙ (A .suff s)) q'
+  --     q'' = subst (λ s → A .Supp s zero) (A .mon-comp (A .suff s)) q'
 
   -- Inlined for the sake of termination:
   -- x' : A .F (ext (Mu A .Supp (sup x f)) ⊤)
@@ -311,8 +334,8 @@ tosp C .necc-suff = refl
 tosp C .suff-necc p = refl
 tosp C .suff-nat f xs = refl
 tosp C .necc-nat f xs p = refl
-tosp C .mon-∙ xs = refl
-tosp C .mon-Supp-∙ = λ xs p → refl
+tosp C .mon-comp xs = refl
+tosp C .mon-Supp-comp = λ xs p → refl
 -}
 
 -- A stricly positive functor is isomorphic to a container
@@ -332,21 +355,21 @@ module M  (sp : SPos) where
 {-
   iso1 : ∀ {X} (xs : sp .F X) → bwd (fwd xs) ≡ xs
   iso1 xs = trans
-            (trans (sym (sp .mon-∙ (sp .suff (sp .mon _ xs))))
+            (trans (sym (sp .mon-comp (sp .suff (sp .mon _ xs))))
                    (cong (sp .mon (sp .necc xs)) (sp .suff-nat _ xs)))
                    (sp .necc-suff)
 
   iso2₁ : ∀ {X} (xs : G X) → (fwd (bwd xs)) .proj₁ ≡ xs .proj₁
-  iso2₁ (s , t) = trans (sp .mon-∙ (sp .suff s)) (sp .necc-suff)
+  iso2₁ (s , t) = trans (sp .mon-comp (sp .suff s)) (sp .necc-suff)
 
 
   iso2₂ : ∀ {X} (xs : G X) {p : _} →
             (fwd (bwd xs)) .proj₂ p ≡ xs .proj₂ (subst (sp .Supp) (iso2₁ xs) p)
   iso2₂ (s , t) {p} = trans (sp .necc-nat  t (sp .suff s) _)
                   (cong t (trans
-                          (cong (sp .necc (sp .suff s)) (sp .mon-Supp-∙ (sp .suff s) _))
+                          (cong (sp .necc (sp .suff s)) (sp .mon-Supp-comp (sp .suff s) _))
                                 (trans (sp .suff-necc _)
-                                       (sym (subst-trans ((sp .mon-∙ (sp .suff s)))
+                                       (sym (subst-trans ((sp .mon-comp (sp .suff s)))
                                                          (sp .necc-suff) p) ))))
 -- -}
 -- -}

@@ -28,7 +28,7 @@ open import Function                              public using (id; _∘_; _∘�
 open import Relation.Nullary                      public using (Dec; yes; no)
 open import Relation.Nullary.Decidable            public using (True)
 open import Relation.Binary                       public using (Decidable)
-open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; cong₂; cong-app; sym; trans; Extensionality)
+open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; cong₂; cong-app; sym; trans; Extensionality; module ≡-Reasoning)
 
 {-# BUILTIN REWRITE _≡_ #-}
 

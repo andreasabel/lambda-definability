@@ -32,11 +32,13 @@ record SPos (I : Set) : Set₁ where
     mon-Supp-suff : ∀{ρ ρ'} (x : F ρ) (supp→ρ' : Supp x →̇ ρ') → Supp (mon supp→ρ' (suff x)) →̇ Supp x
 
 
-{-
     -- laws
-    mon-∙ : ∀ {x y z} {g : y → z} {f : x → y} →
-            ∀ xs → mon g (mon f xs) ≡ mon (g ∘ f) xs
+    mon-∙ : ∀ {x y z} {g : y →̇  z} {f : x →̇  y} →
+            ∀ xs → mon {y} {z} g (mon f xs) ≡ mon (g ∘ f) xs
 
+    necc-suff : ∀ {ρ} {x : F ρ} →  mon (necc x) (suff x) ≡ x
+
+{-
 
     mon-Supp-∙ : ∀ {x y z} {g : y → z} {f : x → y} →
                  ∀ xs → (p : Supp (mon g (mon f xs)))
@@ -50,8 +52,6 @@ record SPos (I : Set) : Set₁ where
     suff-nat : ∀{ρ ρ'} → (f : ρ → ρ') → ∀ (xs : F ρ)
                → mon (mon-Supp f xs) (suff (mon f xs)) ≡ suff xs
 
-
-    necc-suff : ∀ {ρ} {x : F ρ} →  mon (necc x) (suff x) ≡ x
 
     suff-necc : ∀ {ρ} {x : F ρ} (p : Supp _)
                 → necc (suff x) (mon-Supp (necc x) (suff x) p)
@@ -244,38 +244,36 @@ Mu A .mon-Supp ρ→ρ' (sup x f) (there i u) = there v (Mu A .mon-Supp ρ→ρ'
   v = A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) x i
 Mu A .necc (sup x f) (here p)    = A .necc x p
 Mu A .necc (sup x f) (there i u) = Mu A .necc (f i) u
-Mu A .suff {ρ} (sup x f) = sup x' λ u → 𝕎-map {!!} {!!} (Mu A .suff (f (A .mon-Supp-suff x {!λ {i} → ξ {i} ∘ A .necc x {i}!} u)))  -- (A .mon {!ext-⊤-mon (λ{i} → {!A .suff!})!} x) {!!}
--- Mu A .suff {ρ} (sup x f) = sup (φ x) λ u → 𝕎-map φ ψ (f (ψ x u)) -- (A .mon {!ext-⊤-mon (λ{i} → {!A .suff!})!} x) {!!}
+Mu A .suff {ρ} (sup x f) = sup x' \ p →
+  let
+    r : 𝕎 (A .F (ext ρ ⊤)) (λ x₁ → A .Supp x₁ zero)
+    r = f (A .mon-Supp-suff x ζ p)
+  in
+      𝕎-map (A .mon (\ {i} → α p i))
+        (β {p}) (Mu A .suff r)
   where
-
-  η : ρ →̇ (λ i → EF𝕎 (λ y → A .Supp y (suc i)) (sup x f))
-  η {i} u = here {!A .suff x!}
-
-  ξ : ext ρ ⊤ →̇ ext (λ i → EF𝕎 (λ y → A .Supp y (suc i)) (sup x f)) ⊤
-  ξ {i} = ext-⊤-mon η {i}
-
   ζ : A .Supp x →̇ ext (Mu A .Supp (sup x f)) ⊤
   ζ {zero} = _
   ζ {suc i} = here
 
-  φ : ∀ (x : A .F (ext ρ ⊤))  (f : A .Supp x zero → Mu A .F ρ)
-           → A .F (ext (Mu A .Supp (sup x f)) ⊤)
---           → A .F (ext (λ i → EF𝕎 (λ y → A .Supp y (suc i)) (sup x f)) ⊤)
-  -- φ = {! A .mon λ{i} → ξ {i} !}
-  φ x f = A .mon {! ζ !} (A .suff x)
-  -- {! A .suff {ext ρ ⊤} !}
+  -- agda was not happy about i being implicit when applying alpha
+  α : ∀ p → ∀ i
+      → ext (Mu A .Supp (f (A .mon-Supp-suff x ζ p))) ⊤ i
+      → ext (Mu A .Supp (sup x f))                    ⊤ i
+  α p i = ext-⊤-mon (there (A .mon-Supp-suff x ζ p)) {i}
+
+
+  β : ∀ {p : A .Supp (A .mon ζ (A .suff x)) zero}
+        (s : A .F (ext (Mu A .Supp (f (A .mon-Supp-suff x ζ p))) ⊤))
+      → A .Supp (A .mon (\ {i} → α p i) s) zero
+      → A .Supp s                          zero
+  β {p} s q = A .mon-Supp-suff s _ q''
+    where
+      q' = subst (\ s → A .Supp (A .mon ((λ {i} → α p i)) s) zero) (sym (A .necc-suff)) q
+      q'' = subst (\ s → A .Supp s zero) (A .mon-∙ (A .suff s)) q'
 
   x' : A .F (ext (Mu A .Supp (sup x f)) ⊤)
   x' = A .mon ζ (A .suff x)
-
-  u' : A .Supp x zero
-  u' = {!A .mon-Supp-suff x ? !}
-
-  ψ : ∀ (x : A .F (ext ρ ⊤)) (f : A .Supp x zero → Mu A .F ρ)
-      → A .Supp (φ x f) zero
-      → A .Supp x zero
-  ψ x f = {! A .mon-Supp ? x {zero} !}
-  -- ψ x = {! A .mon-Supp (λ{i} → ξ {i}) x !}
 
 {-
 -- containers

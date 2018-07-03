@@ -237,19 +237,25 @@ Mu A .mon-id {ρ} | .id | refl | v = {!!} -- with A .mon-id x
 -- ... | t | u | v = {!!} -- with A .mon-id x
 -- = hcong₂ sup (A .mon-id x) {!!} -- rewrite A .mon-id x = {!hcong₂ sup ? ?!}
 Mu A .Supp w i = EF𝕎 (λ x → A .Supp x (suc i)) w
-Mu A .mon-Supp ρ→ρ' (sup x f) (here p)    = here (A .mon-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) x p)
-Mu A .mon-Supp ρ→ρ' (sup x f) (there i u) = there v (Mu A .mon-Supp ρ→ρ' (f v) u)
+Mu A .mon-Supp {ρ} ρ→ρ' = loop
   where
-  v : A .Supp x zero
-  v = A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) x i
-Mu A .necc (sup x f) (here p)    = A .necc x p
-Mu A .necc (sup x f) (there i u) = Mu A .necc (f i) u
-Mu A .suff {ρ} (sup x f) = sup x' \ p →
+  loop : (x : Mu A .F ρ) → Mu A .Supp (Mu A .mon ρ→ρ' x) →̇ Mu A .Supp x
+  loop (sup x f) (here p)    = here (A .mon-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) x p)
+  loop (sup x f) (there i u) = there v (loop (f v) u)
+    where
+    v : A .Supp x zero
+    v = A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) x i
+Mu A .necc {ρ} = loop
+  where
+  loop : (x : Mu A .F ρ) → Mu A .Supp x →̇ ρ
+  loop (sup x f) (here p)    = A .necc x p
+  loop (sup x f) (there i u) = loop (f i) u
+Mu A .suff {ρ} (sup x f) = sup (A .mon ζ (A .suff x)) λ p →
   let
-    r : 𝕎 (A .F (ext ρ ⊤)) (λ x₁ → A .Supp x₁ zero)
+    r : 𝕎 (A .F (ext ρ ⊤)) (λ y → A .Supp y zero)
     r = f (A .mon-Supp-suff x ζ p)
   in
-      𝕎-map (A .mon (\ {i} → α p i))
+      𝕎-map (A .mon (λ {i} → α p i))
         (β {p}) (Mu A .suff r)
   where
   ζ : A .Supp x →̇ ext (Mu A .Supp (sup x f)) ⊤
@@ -265,15 +271,19 @@ Mu A .suff {ρ} (sup x f) = sup x' \ p →
 
   β : ∀ {p : A .Supp (A .mon ζ (A .suff x)) zero}
         (s : A .F (ext (Mu A .Supp (f (A .mon-Supp-suff x ζ p))) ⊤))
-      → A .Supp (A .mon (\ {i} → α p i) s) zero
+      → A .Supp (A .mon (λ {i} → α p i) s) zero
       → A .Supp s                          zero
-  β {p} s q = A .mon-Supp-suff s _ q''
-    where
-      q' = subst (\ s → A .Supp (A .mon ((λ {i} → α p i)) s) zero) (sym (A .necc-suff)) q
-      q'' = subst (\ s → A .Supp s zero) (A .mon-∙ (A .suff s)) q'
+  β {p} s q = A .mon-Supp-suff s _
+    (subst (λ s → A .Supp s zero) (A .mon-∙ (A .suff s))
+      (subst (λ s → A .Supp (A .mon ((λ {i} → α p i)) s) zero) (sym (A .necc-suff)) q))
+  -- β {p} s q = A .mon-Supp-suff s _ q''
+  --   where
+  --     q' = subst (λ s → A .Supp (A .mon ((λ {i} → α p i)) s) zero) (sym (A .necc-suff)) q
+  --     q'' = subst (λ s → A .Supp s zero) (A .mon-∙ (A .suff s)) q'
 
-  x' : A .F (ext (Mu A .Supp (sup x f)) ⊤)
-  x' = A .mon ζ (A .suff x)
+  -- Inlined for the sake of termination:
+  -- x' : A .F (ext (Mu A .Supp (sup x f)) ⊤)
+  -- x' = A .mon ζ (A .suff x)
 
 {-
 -- containers

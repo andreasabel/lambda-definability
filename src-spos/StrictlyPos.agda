@@ -11,7 +11,7 @@ subst-trans : ∀ {A : Set}{P : A → Set} {x y z : A} →
 subst-trans refl refl xs = refl
 
 subst-∃ : {A A' : Set}{B : A → A' → Set} {a : A} {x y : A'} →
-                (eq : x ≡ y) (u : B a x) → subst (\ x → ∃ \ a → B a x) eq (a , u) ≡ (a , subst (\ x → B a x) eq u)
+          (eq : x ≡ y) (u : B a x) → subst (λ x → ∃ λ a → B a x) eq (a , u) ≡ (a , subst (λ x → B a x) eq u)
 subst-∃ refl u = refl
 
 -- _S_trictly _P_ositive functors have a well-behaved support
@@ -149,8 +149,8 @@ Prod A B .Supp (a , b) i                 = A .Supp a i ⊎ B .Supp b i
 Prod A B .mon-Supp ρ→ρ' (a , b)          = A .mon-Supp ρ→ρ' a +̇ B .mon-Supp ρ→ρ' b
 Prod A B .necc (a , b)                   = [ A .necc a , B .necc b ]
 Prod A B .suff (a , b)                   = A .mon inj₁ (A .suff a) , B .mon inj₂ (B .suff b)
-Prod A B .mon-Supp-suff (a , b) supp→ρ' (inj₁ u) = inj₁ (A .mon-Supp-suff a (λ{i} u' → supp→ρ' (inj₁ u')) (subst (\ x → A .Supp x _) (A .mon-comp (A .suff a)) u))
-Prod A B .mon-Supp-suff (a , b) supp→ρ' (inj₂ u) = inj₂ (B .mon-Supp-suff b (λ{i} u' → supp→ρ' (inj₂ u')) (subst (\ x → B .Supp x _) (B .mon-comp (B .suff b)) u))
+Prod A B .mon-Supp-suff (a , b) supp→ρ' (inj₁ u) = inj₁ (A .mon-Supp-suff a (λ{i} u' → supp→ρ' (inj₁ u')) (subst (λ x → A .Supp x _) (A .mon-comp (A .suff a)) u))
+Prod A B .mon-Supp-suff (a , b) supp→ρ' (inj₂ u) = inj₂ (B .mon-Supp-suff b (λ{i} u' → supp→ρ' (inj₂ u')) (subst (λ x → B .Supp x _) (B .mon-comp (B .suff b)) u))
 Prod A B .mon-id (a , b)                 =  cong₂ _,_ (A .mon-id a) (B .mon-id b)
 Prod A B .mon-comp (a , b) = cong₂ _,_ (A .mon-comp a) (B .mon-comp b)
 Prod {I} A B .mon-Supp-id {ρ} (a , b) (inj₁ l)

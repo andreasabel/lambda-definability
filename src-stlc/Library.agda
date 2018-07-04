@@ -34,6 +34,8 @@ open import Relation.Binary.PropositionalEquality public using (_≡_; refl; sub
 
 postulate
   funExt : Extensionality lzero lzero
+  funExt-β :   {A : Set} {B : A → Set} {f g : (x : A) → B x} →
+      (eq : ∀ x → f x ≡ g x) → ∀ a → (P : B a → Set) → ∀ u → subst (\ f → P (f a)) (funExt eq) u ≡ subst P (eq a) u
 
 -- Function extensionality for hidden function
 

@@ -10,6 +10,10 @@ subst-trans : ∀ {A : Set}{P : A → Set} {x y z : A} →
                   subst P (trans p q) xs ≡ subst P q (subst P p xs)
 subst-trans refl refl xs = refl
 
+subst-∃ : {A A' : Set}{B : A → A' → Set} {a : A} {x y : A'} →
+                (eq : x ≡ y) (u : B a x) → subst (\ x → ∃ \ a → B a x) eq (a , u) ≡ (a , subst (\ x → B a x) eq u)
+subst-∃ refl u = refl
+
 -- _S_trictly _P_ositive functors have a well-behaved support
 
 _→̇_ : {I : Set} (A B : I → Set) → Set
@@ -141,46 +145,12 @@ Fun A B .suff f a                = B .mon (a ,_) (B .suff (f a))
 Fun A B .mon-Supp-suff f supp→ρ' (a , u) = a , B .mon-Supp-suff (f a) (λ{i} u → supp→ρ' (a , u)) (subst (λ x → B .Supp x _) (B .mon-comp (B .suff (f a))) u)
 Fun A B .mon-id f                = funExt λ a → B .mon-id (f a)
 Fun A B .mon-comp f              = funExt λ a → B .mon-comp (f a)
--- Fun A B .mon-Supp-id {ρ} f = funExtH λ{i} →  funExt λ p → {! aux (B .mon {ρ} id) (B .mon-id {ρ})!}
---   where
---   aux : ∀ {A I} {B : SPos I} {ρ : I → Set} {f : A → B .F ρ} {i : I}
---         {p : ∃ (λ a → B .Supp (B .mon (λ {i₁} → id) (f a)) i)}
---         (w : B .F ρ → B .F ρ) (w₁ : w ≡ (λ x → x)) →
---       (p .proj₁ , B .mon-Supp (λ {i₁} x → x) (f (p .proj₁)) (p .proj₂)) ≡
---       subst (λ f₁ → Σ A (λ a → B .Supp (f₁ f a) i))
---       (funExt (λ f₁ → funExt (λ a → cong-app w₁ (f₁ a)))) p
---   aux = ?
-  -- aux : ∀ {A I} {B : SPos I} {ρ : I → Set} {f : A → B .F ρ} {i : I}
-  --       {a : A} {u : B .Supp (B .mon (λ {i₁} → id) (f a)) i}
-  --       (w : B .F ρ → B .F ρ) (w₁ : w ≡ (λ x → x)) →
-  --     (a , B .mon-Supp (λ {i₁} x → x) (f a) u) ≡
-  --     subst (λ f₁ → Σ A (λ a₁ → B .Supp (f₁ f a₁) i))
-  --     (funExt (λ f₁ → funExt (λ a₁ → cong-app w₁ (f₁ a₁)))) (a , u)
-  -- aux = ?
-  -- aux : ∀ {i}
-  --       {a : A}
-  --       (w : B .F ρ → B .F ρ)  {u : B .Supp (w (f a)) i} (w₁ : w ≡ id) →
-  --     (a , B .mon-Supp id (f a) u) ≡
-  --     subst (λ f₁ → Σ A (λ a₁ → B .Supp (f₁ f a₁) i))
-  --     (funExt (λ f₁ → funExt (λ a₁ → cong-app w₁ (f₁ a₁)))) (a , u)
-  -- aux = ?
-Fun A B .mon-Supp-id {ρ} f {i} (a , u) = {!!}
--- aux (B .mon {ρ} id) (B .mon-id {ρ}) (B .mon-Supp {ρ} id) (B .mon-Supp-id {ρ} (f a))
-  -- where
-  -- aux : ∀ {A I} {B : SPos I} {ρ : I → Set} {f : A → B .F ρ} {i : I}
-  --       {a : A} {u : B .Supp (B .mon (λ {i₁} → id) (f a)) i}
-  --       (w : B .F ρ → B .F ρ) (w₁ : w ≡ (λ x → x))
-  --       (w₂
-  --        : (x : B .F ρ) {i : I} → B .Supp (w x) i → B .Supp x i) →
-  --     (λ{i₁} → w₂ (f a) {i₁}) ≡ (λ {i₁} → subst (λ f₁ → B .Supp (f₁ (f a)) i₁) w₁) →
-  --     (a , w₂ (f a) u) ≡
-  --     subst (λ f₁ → Σ A (λ a₁ → B .Supp (f₁ f a₁) i))
-  --     (funExt (λ f₁ → funExt (λ a₁ → cong-app w₁ (f₁ a₁)))) (a , u)
-  -- aux = ?
--- Fun A B .mon-Supp-id {ρ} f = {! aux (B .mon {ρ} id) (B .mon-id {ρ}) (Fun A B .mon-Supp {ρ} id)!}
--- Fun A B .mon-Supp-id {ρ} f with B .mon {ρ} id | B .mon-id {ρ} | B .mon-Supp {ρ} id
--- ... | z | eq | u = {!eq!}
--- Fun A B .mon-Supp-id {ρ} f rewrite B .mon-id {ρ} = {!!}
+Fun A B .mon-Supp-id {ρ} f {i} (a , u) =
+  trans (cong (_,_ a) (trans (B .mon-Supp-id (f a) u) (sym (funExt-β (λ a₁ → B .mon-id (f a₁)) a (λ v → B .Supp v i) u))))
+        (sym (subst-∃ {B = λ v v₁ → B .Supp (v₁ v) i} ((funExt (λ a₁ → B .mon-id (f a₁)))) u))
+  -- does not rewrite
+  -- rewrite (subst-∃ {B = λ v v₁ → B .Supp (v₁ v) i} ((funExt (λ a₁ → B .mon-id (f a₁)))) u)
+  --   = {!!}
 Fun A B .necc-suff f = funExt λ a →
   begin
   B .mon (Fun A B .necc f) (B .mon (a ,_) (B .suff (f a)))  ≡⟨ B .mon-comp (B .suff (f a)) ⟩

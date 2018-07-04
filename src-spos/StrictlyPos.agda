@@ -66,6 +66,17 @@ record SPos (I : Set) : Set₁ where
                 → necc (suff x) (mon-Supp (necc x) (suff x) p)
                 ≡ subst Supp necc-suff p
 -}
+  def-mon-Supp : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → Supp (mon ρ→ρ' x) →̇ Supp x
+  def-mon-Supp ρ→ρ' x {i} u = mon-Supp-suff x (ρ→ρ' ∘ necc x) u'
+    where
+    prf : mon ρ→ρ' x ≡ mon (ρ→ρ' ∘ necc x) (suff x)
+    prf = begin
+      mon ρ→ρ' x                        ≡⟨ cong (mon ρ→ρ') (sym (necc-suff x)) ⟩
+      mon ρ→ρ' (mon (necc x) (suff x))  ≡⟨ mon-comp (suff x) ⟩
+      mon (ρ→ρ' ∘ necc x) (suff x)      ∎ where open ≡-Reasoning
+    u' : Supp (mon (ρ→ρ' ∘ necc x) (suff x)) i
+    u' = subst (λ z → Supp z i) prf u
+
 open SPos
 
 -- Constructions on SPos

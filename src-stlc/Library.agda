@@ -92,9 +92,37 @@ module DecFinRefl {n} = DecRefl {A = Fin n} _≟_
 
 -- {-# REWRITE ≟-refl #-}
 
+-- Case distinction for Fin
+
+finCase : ∀{ℓ} (C : ∀{n} (i : Fin n) → Set ℓ)
+  → (∀{n} → C {suc n} zero)
+  → (∀{n} (i : Fin n) → C (suc i))
+  → ∀{n} (i : Fin n) → C i
+finCase C z s zero    = z
+finCase C z s (suc i) = s i
+
+finCase' : ∀{ℓ} {n} (C : (i : Fin (suc n)) → Set ℓ)
+  → C zero
+  → ((j : Fin n) → C (suc j))
+  → (i : Fin (suc n)) → C i
+finCase' C z s zero    = z
+finCase' C z s (suc i) = s i
+
 -- Path into a 𝕎-tree to a node that satisfies a property.
 -- Similar to the EF operator of CTL.
 
 data EF𝕎 {a b p} {A : Set a} {B : A → Set b} (P : A → Set p) : 𝕎 A B → Set (b ⊔ p) where
   here  : ∀{x f} (p : P x) → EF𝕎 P (sup x f)
   there : ∀{x f} (i : B x) (p : EF𝕎 P (f i)) → EF𝕎 P (sup x f)
+
+-- M-types
+
+record 𝕄 {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
+  coinductive; constructor inf; field
+    shape : A
+    child : B shape → 𝕄 A B
+open 𝕄 public
+
+data EF𝕄 {a b p} {A : Set a} {B : A → Set b} (P : A → Set p) (m : 𝕄 A B) : Set (b ⊔ p) where
+  here  : (p : P (m .shape)) → EF𝕄 P m
+  there : (i : B (m .shape)) (p : EF𝕄 P (m .child i)) → EF𝕄 P m

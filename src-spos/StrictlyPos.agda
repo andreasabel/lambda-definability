@@ -279,6 +279,7 @@ inMu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Mu A .F ρ))) → Mu A .F
 inMu A {ρ} t = sup (A .mon (λ{i} → φ {i}) t) (A .necc t ∘ A .mon-Supp (λ{i} → φ {i}) t)
   where
   φ : ext ρ (Mu A .F ρ) →̇ ext ρ ⊤
+  -- φ {i} = finCase' {!!} _ id i
   φ {zero}  u = _
   φ {suc i} u = u
 
@@ -291,6 +292,23 @@ outMu A {ρ} (sup x f) = A .mon (λ{i} → ψ {i}) (A .suff x)
 
 outMu∘inMu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Mu A .F ρ))) → outMu A (inMu A t) ≡ t
 outMu∘inMu {n} A {ρ} t = {!!}
+
+Nu : ∀{n} (A : SP (suc n)) → SP n
+Nu A .F ρ = 𝕄 (A .F (ext ρ ⊤)) (λ x → A .Supp x zero)
+Nu A .mon = {!!}
+Nu A .Supp  w i = EF𝕄 (λ x → A .Supp x (suc i)) w
+Nu A .mon-Supp = {!!}
+Nu A .necc {ρ} = loop
+  where
+  loop : (x : Nu A .F ρ) → Nu A .Supp x →̇ ρ
+  loop x (here p)    = A .necc (x .shape) p
+  loop x (there i u) = loop (x .child i) u
+Nu A .suff = {!!}
+Nu A .mon-Supp-suff = {!!}
+Nu A .mon-id = {!!}
+Nu A .mon-comp = {!!}
+Nu A .mon-Supp-id = {!!}
+Nu A .necc-suff = {!!}
 
 {-
 -- containers

@@ -274,6 +274,24 @@ Mu A .suff {ρ} (sup x f) = sup (A .mon ζ (A .suff x)) λ p →
   -- x' : A .F (ext (Mu A .Supp (sup x f)) ⊤)
   -- x' = A .mon ζ (A .suff x)
 
+
+inMu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Mu A .F ρ))) → Mu A .F ρ
+inMu A {ρ} t = sup (A .mon (λ{i} → φ {i}) t) (A .necc t ∘ A .mon-Supp (λ{i} → φ {i}) t)
+  where
+  φ : ext ρ (Mu A .F ρ) →̇ ext ρ ⊤
+  φ {zero}  u = _
+  φ {suc i} u = u
+
+outMu : ∀{n} (A : SP (suc n)) {ρ} (t : Mu A .F ρ) → A .F (ext ρ (Mu A .F ρ))
+outMu A {ρ} (sup x f) = A .mon (λ{i} → ψ {i}) (A .suff x)
+  where
+  ψ : A .Supp {ext ρ ⊤} x →̇ ext ρ (Mu A .F ρ)
+  ψ {zero} = f
+  ψ {suc i} = A .necc x {suc i}
+
+outMu∘inMu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Mu A .F ρ))) → outMu A (inMu A t) ≡ t
+outMu∘inMu {n} A {ρ} t = {!!}
+
 {-
 -- containers
 record Cont : Set₁ where

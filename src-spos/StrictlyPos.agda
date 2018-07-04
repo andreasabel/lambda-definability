@@ -77,6 +77,10 @@ record SPos (I : Set) : Set₁ where
     u' : Supp (mon (ρ→ρ' ∘ necc x) (suff x)) i
     u' = subst (λ z → Supp z i) prf u
 
+  def-mon-Supp-id : ∀{ρ} x {i} p → def-mon-Supp {ρ} id x {i} p ≡ subst (λ x → Supp x i) (mon-id {ρ} x) p
+  def-mon-Supp-id {ρ} x {i} p = {!!} -- rewrite mon-id x = {!!}
+
+
 open SPos
 
 -- Constructions on SPos

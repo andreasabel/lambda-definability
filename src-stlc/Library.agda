@@ -56,6 +56,11 @@ f ×̇ g = < f ∘ proj₁ , g ∘ proj₂ >
 _+̇_ : ∀{A B C D : Set} (f : A → C) (g : B → D) → A ⊎ B → C ⊎ D
 f +̇ g = [ inj₁ ∘ f , inj₂ ∘ g ]
 
+-- _+̇′_ : ∀{A B : Set} {C : A → Set} {D : B → Set} (f : (a : A) → C a) (g : (b : B) → D b) (x : A ⊎ B) → case x of  [ C , D ]
+-- f +̇′ g = [ inj₁ ∘ f , inj₂ ∘ g ]
+-- (f +̇′ g) (inj₁ a) = f a
+-- (f +̇′ g) (inj₂ b) = g b
+
 -- Application (S-combinator)
 
 apply : ∀{A B C : Set} (f : C → A → B) (d : C → A) → C → B

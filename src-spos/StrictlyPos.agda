@@ -115,22 +115,6 @@ Const A .necc-suff x = refl
 Empty = Const ⊥
 Unit  = Const ⊤
 
--- Empty : ∀{I} → SPos I
--- Empty .F _ = ⊥
--- Empty .mon _ ()
--- Empty .Supp ()
--- Empty .mon-Supp _ ()
--- Empty .necc ()
--- Empty .suff ()
-
--- Unit : ∀{I} → SPos I
--- Unit .F _ = ⊤
--- Unit .mon = _
--- Unit .Supp _ _ = ⊥
--- Unit .mon-Supp ρ→ρ' _ ()
--- Unit .necc _ ()
--- Unit .suff = _
-
 Fun : ∀ (A : Set) {I} (B : SPos I) → SPos I
 Fun A B .F ρ                     = A → B .F ρ
 Fun A B .mon ρ→ρ' f a            = B .mon ρ→ρ' (f a)
@@ -191,10 +175,8 @@ Prod : ∀{I} (A B : SPos I) → SPos I
 Prod A B .F ρ                            = A .F ρ × B .F ρ
 Prod A B .mon ρ→ρ' (a , b)               = A .mon ρ→ρ' a , B .mon ρ→ρ' b
 Prod A B .Supp (a , b) i                 = A .Supp a i ⊎ B .Supp b i
-Prod A B .mon-Supp ρ→ρ' (a , b) (inj₁ u) = inj₁ (A .mon-Supp ρ→ρ' a u)
-Prod A B .mon-Supp ρ→ρ' (a , b) (inj₂ u) = inj₂ (B .mon-Supp ρ→ρ' b u)
-Prod A B .necc (a , b) (inj₁ u)          = A .necc a u
-Prod A B .necc (a , b) (inj₂ u)          = B .necc b u
+Prod A B .mon-Supp ρ→ρ' (a , b)          = A .mon-Supp ρ→ρ' a +̇ B .mon-Supp ρ→ρ' b
+Prod A B .necc (a , b)                   = [ A .necc a , B .necc b ]
 Prod A B .suff (a , b)                   = A .mon inj₁ (A .suff a) , B .mon inj₂ (B .suff b)
 Prod A B .mon-Supp-suff (a , b) supp→ρ' (inj₁ u) = inj₁ (A .mon-Supp-suff a (λ{i} u' → supp→ρ' (inj₁ u')) {!!})
 Prod A B .mon-Supp-suff (a , b) supp→ρ' (inj₂ u) = {!!}
@@ -215,14 +197,11 @@ Prod A B .necc-suff (a , b) = cong₂ _,_
 {-# TERMINATING #-}
 Sum : ∀{I} (A B : SPos I) → SPos I
 Sum A B .F ρ                      = A .F ρ ⊎ B .F ρ
-Sum A B .mon ρ→ρ' (inj₁ a)        = inj₁ (A .mon ρ→ρ' a)
-Sum A B .mon ρ→ρ' (inj₂ b)        = inj₂ (B .mon ρ→ρ' b)
-Sum A B .Supp (inj₁ a) i          = A .Supp a i
-Sum A B .Supp (inj₂ b) i          = B .Supp b i
-Sum A B .mon-Supp ρ→ρ' (inj₁ a) u = A .mon-Supp ρ→ρ' a u
-Sum A B .mon-Supp ρ→ρ' (inj₂ b) u = B .mon-Supp ρ→ρ' b u
-Sum A B .necc (inj₁ a) u          = A .necc a u
-Sum A B .necc (inj₂ b) u          = B .necc b u
+Sum A B .mon ρ→ρ'                 = A .mon ρ→ρ' +̇ B .mon ρ→ρ'
+Sum A B .Supp {ρ}                 = [ A .Supp {ρ} , B .Supp {ρ} ]
+Sum A B .mon-Supp ρ→ρ'            = [ A .mon-Supp ρ→ρ' , B .mon-Supp ρ→ρ' ]
+Sum A B .necc {ρ}                 = [ A .necc {ρ} , B .necc {ρ} ]
+-- NOT POSSIBLE BECAUSE OF DEPENDENCY: Sum A B .suff {ρ} = A .suff {ρ} +̇ B .suff {ρ}
 Sum A B .suff (inj₁ a)            = inj₁ (A .suff a)
 Sum A B .suff (inj₂ b)            = inj₂ (B .suff b)
 Sum A B .mon-Supp-suff (inj₁ a) supp→ρ' u = A .mon-Supp-suff a supp→ρ' u
@@ -283,7 +262,7 @@ Mu A .F ρ  = 𝕎 (A .F (ext ρ ⊤)) λ x → A .Supp x zero
 Mu A .mon {ρ}{ρ'} ρ→ρ' = 𝕎-map (A .mon λ{i} → ext-⊤-mon ρ→ρ' {i})
                                 (λ x → A .mon-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) x)
 Mu A .mon-id {ρ} = {!A .mon-Supp-id!}
-Mu A .mon-id {ρ} with A .mon {ext ρ ⊤} id | A .mon-id {ext ρ ⊤} | A .mon-Supp {ext ρ ⊤} id | A .mon-Supp-id
+Mu A .mon-id {ρ} with A .mon {ext ρ ⊤} id | A .mon-id {ext ρ ⊤} | A .mon-Supp {ext ρ ⊤} id | A .mon-Supp-id {ext ρ ⊤}
 Mu A .mon-id {ρ} | .id | refl | v | p = {!!} -- with A .mon-id x
 -- Mu A .mon-id {ρ} (sup x f) with A .mon {ext ρ ⊤} id | A .mon-id {ext ρ ⊤} | A .mon-Supp {ext ρ ⊤} id
 -- ... | t | u | v = {!!} -- with A .mon-id x

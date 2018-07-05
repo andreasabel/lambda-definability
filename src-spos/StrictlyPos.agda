@@ -274,14 +274,12 @@ Mu A .suff {ρ} (sup x f) = sup (A .mon ζ (A .suff x)) λ p →
   -- x' : A .F (ext (Mu A .Supp (sup x f)) ⊤)
   -- x' = A .mon ζ (A .suff x)
 
+ext-forget : ∀{n ρ A} i → ext {n = n} ρ A i → ext ρ ⊤ i
+ext-forget zero    = _
+ext-forget (suc _) = id
 
 inMu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Mu A .F ρ))) → Mu A .F ρ
-inMu A {ρ} t = sup (A .mon (λ{i} → φ {i}) t) (A .necc t ∘ A .mon-Supp (λ{i} → φ {i}) t)
-  where
-  φ : ext ρ (Mu A .F ρ) →̇ ext ρ ⊤
-  -- φ {i} = finCase' {!!} _ id i
-  φ {zero}  u = _
-  φ {suc i} u = u
+inMu A {ρ} t = sup (A .mon (λ{i} → ext-forget i) t) (A .necc t ∘ A .mon-Supp (λ{i} → ext-forget i) t)
 
 outMu : ∀{n} (A : SP (suc n)) {ρ} (t : Mu A .F ρ) → A .F (ext ρ (Mu A .F ρ))
 outMu A {ρ} (sup x f) = A .mon (λ{i} → ψ {i}) (A .suff x)
@@ -292,6 +290,14 @@ outMu A {ρ} (sup x f) = A .mon (λ{i} → ψ {i}) (A .suff x)
 
 outMu∘inMu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Mu A .F ρ))) → outMu A (inMu A t) ≡ t
 outMu∘inMu {n} A {ρ} t = {!!}
+
+iterMu :  ∀{n} (A : SP (suc n)) {ρ} {C} (s : A .F (ext ρ C) → C) (t : Mu A .F ρ) → C
+iterMu A {ρ} {C} s (sup x f) = s (A .mon (λ{i} → ψ {i}) (A .suff x))
+  where
+  ψ : A .Supp {ext ρ ⊤} x →̇ ext ρ C
+  ψ {zero} = iterMu A s ∘ f
+  ψ {suc i} = A .necc x {suc i}
+
 
 Nu : ∀{n} (A : SP (suc n)) → SP n
 Nu A .F ρ = 𝕄 (A .F (ext ρ ⊤)) (λ x → A .Supp x zero)
@@ -309,6 +315,24 @@ Nu A .mon-id = {!!}
 Nu A .mon-comp = {!!}
 Nu A .mon-Supp-id = {!!}
 Nu A .necc-suff = {!!}
+
+inNu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Nu A .F ρ))) → Nu A .F ρ
+inNu A {ρ} t = inf (A .mon (λ{i} → ext-forget i) t) (A .necc t ∘ A .mon-Supp (λ{i} → ext-forget i) t)
+
+outNu : ∀{n} (A : SP (suc n)) {ρ} (t : Nu A .F ρ) → A .F (ext ρ (Nu A .F ρ))
+outNu A {ρ} t = A .mon (λ{i} → ψ {i}) (A .suff x)
+  where
+  x = t .shape
+  ψ : A .Supp {ext ρ ⊤} x →̇ ext ρ (Nu A .F ρ)
+  ψ {zero} = t .child
+  ψ {suc i} = A .necc x {suc i}
+
+outNu∘inNu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Nu A .F ρ))) → outNu A (inNu A t) ≡ t
+outNu∘inNu {n} A {ρ} t = {!!}
+
+coiterNu :  ∀{n} (A : SP (suc n)) {ρ} {C} (s : C → A .F (ext ρ C)) → C → Nu A .F ρ
+coiterNu A {ρ} {C} s c .shape = A .mon (λ{i} → ext-forget i) (s c)
+coiterNu A {ρ} {C} s c .child = coiterNu A s ∘ A .necc (s c) ∘ A .mon-Supp (λ{i} → ext-forget i) (s c)
 
 {-
 -- containers

@@ -48,6 +48,14 @@ record SPos (I : Set) : Set₁ where
 
     necc-suff : ∀ {ρ} (x : F ρ) →  mon (necc x) (suff x) ≡ x
 
+
+    suff-nat : ∀{ρ ρ'} → (f : ρ →̇  ρ') → ∀ (xs : F ρ)
+               → mon (mon-Supp f xs) (suff (mon f xs)) ≡ suff xs
+
+
+    necc-nat : ∀{ρ ρ'} → (f : ρ →̇  ρ') → ∀ (xs : F ρ) {i} → (p : Supp (mon f xs) i)
+               → necc (mon f xs) p ≡ f (necc xs (mon-Supp f xs p))
+
 {-
 
     mon-Supp-comp : ∀ {x y z} {g : y → z} {f : x → y} →
@@ -56,17 +64,15 @@ record SPos (I : Set) : Set₁ where
                  ≡ mon-Supp (g ∘ f) xs (subst Supp (mon-comp xs) p)
 
 
-    necc-nat : ∀{ρ ρ' : Set} → (f : ρ → ρ') → ∀ (xs : F ρ) (p : Supp (mon f xs))
-               → necc (mon f xs) p ≡ f (necc xs (mon-Supp f xs p))
-
-    suff-nat : ∀{ρ ρ'} → (f : ρ → ρ') → ∀ (xs : F ρ)
-               → mon (mon-Supp f xs) (suff (mon f xs)) ≡ suff xs
 
 
     suff-necc : ∀ {ρ} {x : F ρ} (p : Supp _)
                 → necc (suff x) (mon-Supp (necc x) (suff x) p)
                 ≡ subst Supp necc-suff p
 -}
+  def-mon-Supp-suff : ∀{ρ ρ'} (x : F ρ) (supp→ρ' : Supp x →̇ ρ') → Supp (mon supp→ρ' (suff x)) →̇ Supp x
+  def-mon-Supp-suff ρ→ρ' x p = supp-suff ρ→ρ' (mon-Supp x (suff ρ→ρ') p)
+  
   def-mon-Supp : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → Supp (mon ρ→ρ' x) →̇ Supp x
   def-mon-Supp ρ→ρ' x {i} u = mon-Supp-suff x (ρ→ρ' ∘ necc x) u'
     where
@@ -291,13 +297,28 @@ inMu A {ρ} t = sup (A .mon (λ{i} → ext-forget i) t) (A .necc t ∘ A .mon-Su
 
 outMu : ∀{n} (A : SP (suc n)) {ρ} (t : Mu A .F ρ) → A .F (ext ρ (Mu A .F ρ))
 outMu A {ρ} (sup x f) = A .mon (λ{i} → ψ {i}) (A .suff x)
-  where
+  module out where
   ψ : A .Supp {ext ρ ⊤} x →̇ ext ρ (Mu A .F ρ)
   ψ {zero} = f
   ψ {suc i} = A .necc x {suc i}
 
 outMu∘inMu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Mu A .F ρ))) → outMu A (inMu A t) ≡ t
-outMu∘inMu {n} A {ρ} t = {!!}
+outMu∘inMu {n} A {ρ} t =
+  begin
+  A .mon (out.ψ A (A .mon (λ {i} → ext-forget i) t) (λ x → A .necc t (A .mon-Supp (λ {i} → ext-forget i) t x)))
+         (A .suff (A .mon (λ {i} → ext-forget i) t))
+    ≡⟨ cong (\ (f : A .Supp (A .mon (λ {i} → ext-forget i) t) →̇ ext ρ (𝕎 (A .F (ext ρ ⊤)) (λ x → A .Supp x zero)))
+                                                          → A .mon f (A .suff (A .mon (λ {i} → ext-forget i) t)))
+                                (funExtH \ { {zero} → refl ; {suc i} → funExt (\ p → A .necc-nat (λ {i₁} → ext-forget i₁) t p) }) ⟩
+  A .mon (λ {i} → (A .necc t) ∘ A .mon-Supp (λ {i} → ext-forget i) t)
+         (A .suff (A .mon (λ {i} → ext-forget i) t))
+    ≡⟨ sym (A .mon-comp (A .suff (A .mon (λ {i} → ext-forget i) t))) ⟩
+  A .mon (A .necc t) (A .mon (A .mon-Supp (λ {i} → ext-forget i) t)
+         (A .suff (A .mon (λ {i} → ext-forget i) t)))
+    ≡⟨ cong (A .mon _) (A .suff-nat ((λ {i} → ext-forget i)) t) ⟩
+  A .mon (A .necc t) (A .suff t)
+    ≡⟨ A .necc-suff t ⟩
+  t ∎ where open ≡-Reasoning
 
 iterMu :  ∀{n} (A : SP (suc n)) {ρ} {C} (s : A .F (ext ρ C) → C) (t : Mu A .F ρ) → C
 iterMu A {ρ} {C} s (sup x f) = s (A .mon (λ{i} → ψ {i}) (A .suff x))

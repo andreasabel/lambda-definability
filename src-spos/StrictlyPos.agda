@@ -123,6 +123,10 @@ Var i .mon-id _ = refl
 Var i .mon-comp x = refl
 Var i .mon-Supp-id {ρ} _ _ = refl
 Var i .necc-suff x = refl
+Var i .suff-nat = λ f xs → refl
+Var i .necc-nat f xs {j} p with i ≟ j
+Var i .necc-nat f xs {.i} p | yes refl = refl
+Var i .necc-nat f xs {j} () | no ¬p
 
 -- Constant types have empty support
 
@@ -139,6 +143,8 @@ Const A .mon-id _ = refl
 Const A .mon-comp x = refl
 Const A .mon-Supp-id _ _ = refl
 Const A .necc-suff x = refl
+Const A .suff-nat = λ f xs → refl
+Const A .necc-nat f xs ()
 
 Empty = Const ⊥
 Unit  = Const ⊤
@@ -166,6 +172,10 @@ Fun A B .necc-suff f = funExt λ a →
   B .mon (Fun A B .necc f ∘ (a ,_)) (B .suff (f a))         ≡⟨⟩
   B .mon (B .necc (f a)) (B .suff (f a))                    ≡⟨ B .necc-suff (f a) ⟩
   f a                                                       ∎ where open ≡-Reasoning -- {!B .necc-suff!}
+Fun A B .necc-nat f xs p = B .necc-nat f (xs (p .proj₁)) (p .proj₂)
+Fun A B .suff-nat f xs = funExt (λ x → trans (trans (B .mon-comp (B .suff (B .mon f (xs x))))
+                                ((sym ((B .mon-comp (B .suff (B .mon f (xs x))))))))
+                                (cong (B .mon (λ {_} section → x , section)) (B .suff-nat f (xs x))))
 
 Prod : ∀{I} (A B : SPos I) → SPos I
 Prod A B .F ρ                            = A .F ρ × B .F ρ
@@ -187,6 +197,10 @@ Prod {I} A B .mon-Supp-id {ρ} (a , b) (inj₂ r)
 Prod A B .necc-suff (a , b) = cong₂ _,_
   (trans (A .mon-comp (A .suff a)) (A .necc-suff a))
   (trans (B .mon-comp (B .suff b)) (B .necc-suff b))
+Prod A B .suff-nat f xs = cong₂ _,_ (trans (A .mon-comp (A .suff _)) (trans (sym (A .mon-comp {ρ₂→ρ₃ = inj₁} (A .suff _))) (cong (A .mon inj₁) (A .suff-nat f (xs .proj₁)))))
+                                    (trans (B .mon-comp (B .suff _)) (trans (sym (B .mon-comp {ρ₂→ρ₃ = inj₂} (B .suff _))) (cong (B .mon inj₂) (B .suff-nat f (xs .proj₂)))))
+Prod A B .necc-nat f xs (inj₁ x) = A .necc-nat f (xs .proj₁) x
+Prod A B .necc-nat f xs (inj₂ y) = B .necc-nat f (xs .proj₂) y
 
 {-# TERMINATING #-}
 Sum : ∀{I} (A B : SPos I) → SPos I
@@ -210,6 +224,10 @@ Sum A B .mon-Supp-id {ρ} (inj₁ a) p rewrite A .mon-Supp-id a p | A .mon-id a 
 Sum A B .mon-Supp-id {ρ} (inj₂ b) p rewrite B .mon-Supp-id b p | B .mon-id b = refl
 Sum A B .necc-suff (inj₁ a) = cong inj₁ (A .necc-suff a)
 Sum A B .necc-suff (inj₂ b) = cong inj₂ (B .necc-suff b)
+Sum A B .suff-nat f (inj₁ x) = cong inj₁ (A .suff-nat f x)
+Sum A B .suff-nat f (inj₂ y) = cong inj₂ (B .suff-nat f y)
+Sum A B .necc-nat f (inj₁ x) p = A .necc-nat f x p
+Sum A B .necc-nat f (inj₂ y) p = B .necc-nat f y p
 
 ext : ∀{ℓ} {A : Set ℓ} {n} (ρ : Fin n → A) (x : A) (i : Fin (suc n)) → A
 ext ρ x zero = x
@@ -287,6 +305,8 @@ Mu A .suff {ρ} (sup x f) = sup (A .mon ζ (A .suff x)) λ p →
   -- Inlined for the sake of termination:
   -- x' : A .F (ext (Mu A .Supp (sup x f)) ⊤)
   -- x' = A .mon ζ (A .suff x)
+Mu A .suff-nat = {!!}
+Mu A .necc-nat = {!!}
 
 ext-forget : ∀{n ρ A} i → ext {n = n} ρ A i → ext ρ ⊤ i
 ext-forget zero    = _

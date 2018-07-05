@@ -72,7 +72,7 @@ record SPos (I : Set) : Set₁ where
 -}
   def-mon-Supp-suff : ∀{ρ ρ'} (x : F ρ) (supp→ρ' : Supp x →̇ ρ') → Supp (mon supp→ρ' (suff x)) →̇ Supp x
   def-mon-Supp-suff ρ→ρ' x p = supp-suff ρ→ρ' (mon-Supp x (suff ρ→ρ') p)
-  
+
   def-mon-Supp : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → Supp (mon ρ→ρ' x) →̇ Supp x
   def-mon-Supp ρ→ρ' x {i} u = mon-Supp-suff x (ρ→ρ' ∘ necc x) u'
     where
@@ -307,6 +307,11 @@ Mu A .suff {ρ} (sup x f) = sup (A .mon ζ (A .suff x)) λ p →
   -- x' = A .mon ζ (A .suff x)
 Mu A .suff-nat = {!!}
 Mu A .necc-nat = {!!}
+Mu A .supp-suff x u             = {!!}
+Mu A .mon-Supp-suff x supp→ρ' u = {!!}
+Mu A .mon-comp x                = {!!}
+Mu A .mon-Supp-id x p           = {!!}
+Mu A .necc-suff x               = {!!}
 
 ext-forget : ∀{n ρ A} i → ext {n = n} ρ A i → ext ρ ⊤ i
 ext-forget zero    = _
@@ -350,9 +355,16 @@ iterMu A {ρ} {C} s (sup x f) = s (A .mon (λ{i} → ψ {i}) (A .suff x))
 
 Nu : ∀{n} (A : SP (suc n)) → SP n
 Nu A .F ρ = 𝕄 (A .F (ext ρ ⊤)) (λ x → A .Supp x zero)
-Nu A .mon = {!!}
+Nu A .mon ρ→ρ' = 𝕄-map (A .mon λ{i} → ext-⊤-mon ρ→ρ' {i}) (λ x → A .mon-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) x)
 Nu A .Supp  w i = EF𝕄 (λ x → A .Supp x (suc i)) w
-Nu A .mon-Supp = {!!}
+Nu A .mon-Supp {ρ} {ρ'} ρ→ρ' = loop
+  where
+  loop : (x : Nu A .F ρ) → Nu A .Supp (Nu A .mon ρ→ρ' x) →̇ Nu A .Supp x
+  loop x (here p)    = here (A .mon-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) (x .shape) p)
+  loop x (there i u) = there v (loop (x .child v) u)
+    where
+    v : A .Supp (x .shape) zero
+    v = A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) (x .shape) i
 Nu A .necc {ρ} = loop
   where
   loop : (x : Nu A .F ρ) → Nu A .Supp x →̇ ρ
@@ -361,10 +373,12 @@ Nu A .necc {ρ} = loop
 Nu A .suff = {!!}
 Nu A .supp-suff = {!!}
 Nu A .mon-Supp-suff = {!!}
-Nu A .mon-id = {!!}
+Nu A .mon-id x = {!!}
 Nu A .mon-comp = {!!}
 Nu A .mon-Supp-id = {!!}
 Nu A .necc-suff = {!!}
+Nu A .suff-nat f xs   = {!!}
+Nu A .necc-nat f xs p = {!!}
 
 inNu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Nu A .F ρ))) → Nu A .F ρ
 inNu A {ρ} t = inf (A .mon (λ{i} → ext-forget i) t) (A .necc t ∘ A .mon-Supp (λ{i} → ext-forget i) t)

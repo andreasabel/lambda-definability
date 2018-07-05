@@ -7,6 +7,7 @@
 
 -- We use Agda's rewriting facility to automatically apply proven equalities.
 
+{-# OPTIONS --postfix-projections #-}
 {-# OPTIONS --rewriting #-}
 
 module Library where
@@ -115,13 +116,46 @@ data EF𝕎 {a b p} {A : Set a} {B : A → Set b} (P : A → Set p) : 𝕎 A B �
   here  : ∀{x f} (p : P x) → EF𝕎 P (sup x f)
   there : ∀{x f} (i : B x) (p : EF𝕎 P (f i)) → EF𝕎 P (sup x f)
 
--- M-types
+-- 𝕄-types (non-wellfounded trees)
 
 record 𝕄 {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
   coinductive; constructor inf; field
     shape : A
     child : B shape → 𝕄 A B
 open 𝕄 public
+
+record Eq𝕄 {a b} {A : Set a} {B : A → Set b} (m m' : 𝕄 A B) : Set (a ⊔ b) where
+  coinductive; constructor eq-inf; field
+    eq-shape : m .shape ≡ m' . shape
+    eq-child : ∀ (b : B (m .shape)) → Eq𝕄 (m .child b) (m' .child (subst B eq-shape b))
+open Eq𝕄 public
+
+-- Postulate extensionality for 𝕄-types
+
+postulate
+  Eq𝕄-to-≡ : ∀ {a b} {A : Set a} {B : A → Set b} {m m' : 𝕄 A B} → Eq𝕄 m m' → m ≡ m'
+  Eq𝕄-to-≡-refl : ∀ {a b} {A : Set a} {B : A → Set b} {m : 𝕄 A B} (eq : Eq𝕄 m m) → Eq𝕄-to-≡ eq ≡ refl
+{-# REWRITE Eq𝕄-to-≡-refl #-}
+
+-- Map for 𝕄
+
+module _ {a b c d} {A : Set a} {B : A → Set b} {C : Set c} {D : C → Set d}
+         (A→C : A → C) (D→B : ∀ a → D (A→C a) → B a) where
+
+ 𝕄-map : 𝕄 A B → 𝕄 C D
+ 𝕄-map m .shape = A→C (m .shape)
+ 𝕄-map m .child = 𝕄-map ∘ m .child ∘ D→B (m .shape)
+
+-- First functor law
+
+𝕄-map-id' : ∀ {a b} {A : Set a} {B : A → Set b} (x : 𝕄 A B) → Eq𝕄 (𝕄-map id (λ a → id) x) x
+𝕄-map-id' x .eq-shape = refl
+𝕄-map-id' x .eq-child b = 𝕄-map-id' (x .child b)
+
+𝕄-map-id : ∀ {a b} {A : Set a} {B : A → Set b} (x : 𝕄 A B) → 𝕄-map id (λ a → id) x ≡ x
+𝕄-map-id = Eq𝕄-to-≡ ∘ 𝕄-map-id'
+
+-- Pathes into 𝕄-types
 
 data EF𝕄 {a b p} {A : Set a} {B : A → Set b} (P : A → Set p) (m : 𝕄 A B) : Set (b ⊔ p) where
   here  : (p : P (m .shape)) → EF𝕄 P m

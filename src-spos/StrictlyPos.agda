@@ -257,20 +257,13 @@ Mu A .mon-id {ρ} x = {!A .mon-Supp-id!}
 -- Mu A .mon-id {ρ} (sup x f) with A .mon {ext ρ ⊤} id | A .mon-id {ext ρ ⊤} | A .mon-Supp {ext ρ ⊤} id
 -- ... | t | u | v = {!!} -- with A .mon-id x
 -- = hcong₂ sup (A .mon-id x) {!!} -- rewrite A .mon-id x = {!hcong₂ sup ? ?!}
-Mu A .Supp w i = EF𝕎 (λ x → A .Supp x (suc i)) w
-Mu A .mon-Supp {ρ} ρ→ρ' = loop
-  where
-  loop : (x : Mu A .F ρ) → Mu A .Supp (Mu A .mon ρ→ρ' x) →̇ Mu A .Supp x
-  loop (sup x f) (here p)    = here (A .mon-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) x p)
-  loop (sup x f) (there i u) = there v (loop (f v) u)
-    where
-    v : A .Supp x zero
-    v = A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) x i
-Mu A .necc {ρ} = loop
-  where
-  loop : (x : Mu A .F ρ) → Mu A .Supp x →̇ ρ
-  loop (sup x f) (here p)    = A .necc x p
-  loop (sup x f) (there i u) = loop (f i) u
+Mu A .Supp w i                = EF𝕎 (λ x → A .Supp x (suc i)) w
+Mu A .mon-Supp {ρ} ρ→ρ' x {i} = EF𝕎-map
+  (A .mon (λ{j} → ext-⊤-mon ρ→ρ' {j}))
+  (λ y → A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
+  (λ y → A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
+  x
+Mu A .necc {ρ} x u = let x' , p = 𝕎-lookup x u in A .necc x' p
 Mu A .suff {ρ} (sup x f) = sup (A .mon ζ (A .suff x)) λ p →
   let
     r : 𝕎 (A .F (ext ρ ⊤)) (λ y → A .Supp y zero)

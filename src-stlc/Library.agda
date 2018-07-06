@@ -116,6 +116,28 @@ data EF𝕎 {a b p} {A : Set a} {B : A → Set b} (P : A → Set p) : 𝕎 A B �
   here  : ∀{x f} (p : P x) → EF𝕎 P (sup x f)
   there : ∀{x f} (i : B x) (p : EF𝕎 P (f i)) → EF𝕎 P (sup x f)
 
+EF𝕎-map₀ : ∀ {a b c d p} {A : Set a} {B : A → Set b} {C : Set c} {D : C → Set d} {P : C → Set p}
+         (A→C : A → C) (D→B : ∀ a → D (A→C a) → B a)
+  (w : 𝕎 A B) (p : EF𝕎 {B = D} P (𝕎-map A→C D→B w)) → EF𝕎 (P ∘ A→C) w
+EF𝕎-map₀ A→C D→B (sup x f) (here p)    = here p
+EF𝕎-map₀ A→C D→B (sup x f) (there i p) = there (D→B _ i) (EF𝕎-map₀ A→C D→B (f (D→B _ i)) p)
+
+EF𝕎-map : ∀ {a b c d p q} {A : Set a} {B : A → Set b} {C : Set c} {D : C → Set d} {P : C → Set p} {Q : A → Set q}
+         (A→C : A → C) (D→B : ∀ a → D (A→C a) → B a) (P→Q : ∀ a → P (A→C a) → Q a)
+  (w : 𝕎 A B) (p : EF𝕎 {B = D} P (𝕎-map A→C D→B w)) → EF𝕎 Q w
+EF𝕎-map A→C D→B P→Q (sup x f) (here p)    = here (P→Q _ p)
+EF𝕎-map A→C D→B P→Q (sup x f) (there i p) = there (D→B _ i) (EF𝕎-map A→C D→B P→Q (f (D→B _ i)) p)
+
+𝕎-lookup : ∀ {a b p} {A : Set a} {B : A → Set b} {P : A → Set p}
+  (w : 𝕎 A B) (p : EF𝕎 P w) → Σ A P
+𝕎-lookup (sup x f) (here p)    = x , p
+𝕎-lookup (sup x f) (there i p) = 𝕎-lookup (f i) p
+
+𝕎-lookup' : ∀ {a b p c} {A : Set a} {B : A → Set b} {P : A → Set p} {C : Set c}
+  (w : 𝕎 A B) (p : EF𝕎 P w) (k : (a : A) → P a → C) → C
+𝕎-lookup' (sup x f) (here p)    k = k x p
+𝕎-lookup' (sup x f) (there i p) k = 𝕎-lookup' (f i) p k
+
 -- 𝕄-types (non-wellfounded trees)
 
 record 𝕄 {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where

@@ -47,6 +47,7 @@ record SPos (I : Set) : Set₁ where
     mon-cong : ∀{ρ ρ'} {f f' : ρ →̇  ρ'} (x : F ρ)
       → (eq : ∀{i} y → f (necc x {i} y) ≡ f' (necc x {i} y))
       → mon f x ≡ mon f' x
+
     mon-Supp-id : ∀{ρ} x {i} p → mon-Supp {ρ} id x {i} p ≡ subst (λ x → Supp x i) (mon-id {ρ} x) p
 
     -- mon-Supp-id : ∀{ρ} (x : F ρ) →
@@ -93,6 +94,16 @@ record SPos (I : Set) : Set₁ where
   def-mon-Supp-id : ∀{ρ} x {i} p → def-mon-Supp {ρ} id x {i} p ≡ subst (λ x → Supp x i) (mon-id {ρ} x) p
   def-mon-Supp-id {ρ} x {i} p = {!!} -- rewrite mon-id x = {!!}
 
+  mon-id! : ∀{ρ} → mon {ρ} id ≡ id
+  mon-id! = funExt λ x → mon-id x
+
+  mon-Supp-id! : ∀{ρ} (x : F ρ) →
+    (λ{i} → mon-Supp {ρ} id x {i}) ≡  λ{i} → subst (λ f → Supp (f x) i) (mon-id! {ρ})
+  mon-Supp-id! x = funExtH λ{i} → funExt λ p →
+    begin
+      mon-Supp id x p                       ≡⟨ mon-Supp-id x p ⟩
+      subst (λ y → Supp y i) (mon-id x) p   ≡⟨ subst-ext (λ v → Supp v i) mon-id p ⟩
+      subst (λ f → Supp (f x) i) mon-id! p  ∎ where open ≡-Reasoning
 
 open SPos
 
@@ -260,15 +271,10 @@ Mu : ∀{n} (A : SP (suc n)) → SP n
 Mu A .F ρ  = 𝕎 (A .F (ext ρ ⊤)) λ x → A .Supp x zero
 Mu A .mon {ρ}{ρ'} ρ→ρ' = 𝕎-map (A .mon λ{i} → ext-⊤-mon ρ→ρ' {i})
                                 (λ x → A .mon-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) x)
--- Mu A .mon-id {ρ} = {!A .mon-Supp-id!}
--- Mu A .mon-id {ρ} with A .mon {ext ρ ⊤} id | A .mon-id {ext ρ ⊤} | A .mon-Supp {ext ρ ⊤} id | A .mon-Supp-id {ext ρ ⊤}
--- Mu A .mon-id {ρ} | .id | refl | v | p = {!!} -- with A .mon-id x
-Mu A .mon-id {ρ} x = {!A .mon-Supp-id!}
--- with A .mon {ext ρ ⊤} id | A .mon-id {ext ρ ⊤} | A .mon-Supp {ext ρ ⊤} id | A .mon-Supp-id
--- Mu A .mon-id {ρ} | .id | refl | v | p = {!!} -- with A .mon-id x
--- Mu A .mon-id {ρ} (sup x f) with A .mon {ext ρ ⊤} id | A .mon-id {ext ρ ⊤} | A .mon-Supp {ext ρ ⊤} id
--- ... | t | u | v = {!!} -- with A .mon-id x
--- = hcong₂ sup (A .mon-id x) {!!} -- rewrite A .mon-id x = {!hcong₂ sup ? ?!}
+
+Mu A .mon-id {ρ} x with A .mon {ext ρ ⊤} id | mon-id! A {ext ρ ⊤} | A .mon-Supp {ext ρ ⊤} id | mon-Supp-id! A {ext ρ ⊤}
+Mu A .mon-id {ρ} x | .id | refl | v | p rewrite funExt p = 𝕎-map-id x
+
 Mu A .Supp w i                = EF𝕎 (λ x → A .Supp x (suc i)) w
 Mu A .mon-Supp {ρ} ρ→ρ' x {i} = EF𝕎-map
   (A .mon (λ{j} → ext-⊤-mon ρ→ρ' {j}))
@@ -379,7 +385,8 @@ Nu A .necc {ρ} = loop
 Nu A .suff = {!!}
 Nu A .supp-suff = {!!}
 Nu A .mon-Supp-suff = {!!}
-Nu A .mon-id x = {!!}
+Nu A .mon-id {ρ} x with A .mon {ext ρ ⊤} id | mon-id! A {ext ρ ⊤} | A .mon-Supp {ext ρ ⊤} id | mon-Supp-id! A {ext ρ ⊤}
+Nu A .mon-id {ρ} x | .id | refl | v | p rewrite funExt p = 𝕄-map-id x
 Nu A .mon-comp = {!!}
 Nu A .mon-cong x eq = {!!}
 Nu A .mon-Supp-id = {!!}

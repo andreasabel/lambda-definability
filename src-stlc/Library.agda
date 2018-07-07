@@ -34,20 +34,27 @@ open import Relation.Binary.PropositionalEquality public using (_≡_; refl; sub
 {-# BUILTIN REWRITE _≡_ #-}
 
 postulate
-  funExt : Extensionality lzero lzero
-  funExt-β :   {A : Set} {B : A → Set} {f g : (x : A) → B x} →
+  funExt : ∀{a b} → Extensionality a b
+  funExt-β : ∀{a b} {A : Set a} {B : A → Set b} {f g : (x : A) → B x} →
       (eq : ∀ x → f x ≡ g x) → ∀ a → (P : B a → Set) → ∀ u → subst (\ f → P (f a)) (funExt eq) u ≡ subst P (eq a) u
 
 -- Function extensionality for hidden function
 
-funExtH :
-  {A : Set} {B : A → Set} {f g : {x : A} → B x} →
+funExtH : ∀{a b}
+  {A : Set a} {B : A → Set b} {f g : {x : A} → B x} →
   (∀{x} → f {x} ≡ g {x}) → (λ{x} → f {x}) ≡ (λ{x} → g {x})
 funExtH {f = f} {g = g} h = cong (λ f {x} → f x) (funExt {f = λ x → f {x}} {g = λ x → g {x}} (λ x → h {x}))
 
 hcong₂ : ∀ {a b c} {A : Set a} {B : A → Set b} {C : Set c}
         (f : (x : A) → B x → C) {x y} {u : B x} {v : B y} (p : x ≡ y) → subst B p u ≡ v → f x u ≡ f y v
 hcong₂ f refl refl = refl
+
+subst-ext : ∀{a b p} {A : Set a} {B : Set b} (P : B → Set p)
+  → ∀{f g : A → B} (eq : ∀ x → f x ≡ g x)
+  → ∀{x : A} (h : P (f x))
+  → subst P (eq x) h ≡ subst (λ f → P (f x)) (funExt eq) h
+subst-ext P eq {x} h with eq x | funExt eq
+subst-ext P eq {x} h | refl | refl = refl
 
 -- Binary product of functions
 
@@ -108,6 +115,11 @@ finCase' : ∀{ℓ} {n} (C : (i : Fin (suc n)) → Set ℓ)
   → (i : Fin (suc n)) → C i
 finCase' C z s zero    = z
 finCase' C z s (suc i) = s i
+
+-- 𝕎 type
+
+𝕎-map-id : ∀ {a b} {A : Set a} {B : A → Set b} (x : 𝕎 A B) → 𝕎-map id (λ a → id) x ≡ x
+𝕎-map-id (sup x f) = hcong₂ sup refl (funExt (λ b → 𝕎-map-id (f b)))
 
 -- Path into a 𝕎-tree to a node that satisfies a property.
 -- Similar to the EF operator of CTL.

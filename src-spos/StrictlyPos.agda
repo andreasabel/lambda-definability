@@ -41,6 +41,12 @@ record SPos (I : Set) : Set₁ where
     mon-comp : ∀ {ρ₁ ρ₂ ρ₃} {ρ₂→ρ₃ : ρ₂ →̇  ρ₃} {ρ₁→ρ₂ : ρ₁ →̇  ρ₂} →
             ∀ x → mon {ρ₂} ρ₂→ρ₃ (mon ρ₁→ρ₂ x) ≡ mon (ρ₂→ρ₃ ∘ ρ₁→ρ₂) x
 
+    -- If  f  and  f'  coincide on the support of  x
+    -- then  mon f  and  mon f'  coincide on  x.
+
+    mon-cong : ∀{ρ ρ'} {f f' : ρ →̇  ρ'} (x : F ρ)
+      → (eq : ∀{i} y → f (necc x {i} y) ≡ f' (necc x {i} y))
+      → mon f x ≡ mon f' x
     mon-Supp-id : ∀{ρ} x {i} p → mon-Supp {ρ} id x {i} p ≡ subst (λ x → Supp x i) (mon-id {ρ} x) p
 
     -- mon-Supp-id : ∀{ρ} (x : F ρ) →
@@ -121,6 +127,7 @@ Var i .supp-suff x = id
 Var i .mon-Supp-suff x supp→ρ' u = u
 Var i .mon-id _ = refl
 Var i .mon-comp x = refl
+Var i .mon-cong x eq = eq {i} _
 Var i .mon-Supp-id {ρ} _ _ = refl
 Var i .necc-suff x = refl
 Var i .suff-nat = λ f xs → refl
@@ -141,6 +148,7 @@ Const A .supp-suff x = id
 Const A .mon-Supp-suff _ _ = id
 Const A .mon-id _ = refl
 Const A .mon-comp x = refl
+Const A .mon-cong x eq = refl
 Const A .mon-Supp-id _ _ = refl
 Const A .necc-suff x = refl
 Const A .suff-nat = λ f xs → refl
@@ -160,6 +168,7 @@ Fun A B .supp-suff f (a , u)     = a , B .supp-suff (f a) (B .mon-Supp (a ,_) (B
 Fun A B .mon-Supp-suff f supp→ρ' (a , u) = a , B .mon-Supp-suff (f a) (λ{i} u → supp→ρ' (a , u)) (subst (λ x → B .Supp x _) (B .mon-comp (B .suff (f a))) u)
 Fun A B .mon-id f                = funExt λ a → B .mon-id (f a)
 Fun A B .mon-comp f              = funExt λ a → B .mon-comp (f a)
+Fun A B .mon-cong f eq           = funExt λ a → B .mon-cong (f a) (λ{i} y → eq {i} (a , y))
 Fun A B .mon-Supp-id {ρ} f {i} (a , u) =
   trans (cong (_,_ a) (trans (B .mon-Supp-id (f a) u) (sym (funExt-β (λ a₁ → B .mon-id (f a₁)) a (λ v → B .Supp v i) u))))
         (sym (subst-∃ {B = λ v v₁ → B .Supp (v₁ v) i} ((funExt (λ a₁ → B .mon-id (f a₁)))) u))
@@ -190,6 +199,7 @@ Prod A B .mon-Supp-suff (a , b) supp→ρ' (inj₁ u) = inj₁ (A .mon-Supp-suff
 Prod A B .mon-Supp-suff (a , b) supp→ρ' (inj₂ u) = inj₂ (B .mon-Supp-suff b (λ{i} u' → supp→ρ' (inj₂ u')) (subst (λ x → B .Supp x _) (B .mon-comp (B .suff b)) u))
 Prod A B .mon-id (a , b)                 = cong₂ _,_ (A .mon-id a) (B .mon-id b)
 Prod A B .mon-comp (a , b)               = cong₂ _,_ (A .mon-comp a) (B .mon-comp b)
+Prod A B .mon-cong (a , b) eq            = cong₂ _,_ (A .mon-cong a (eq ∘ inj₁)) (B .mon-cong b (eq ∘ inj₂))
 Prod {I} A B .mon-Supp-id {ρ} (a , b) (inj₁ l)
   rewrite A .mon-Supp-id a l | A .mon-id a | B .mon-id b = refl
 Prod {I} A B .mon-Supp-id {ρ} (a , b) (inj₂ r)
@@ -220,6 +230,8 @@ Sum A B .mon-id (inj₁ a) = cong inj₁ (A .mon-id a)
 Sum A B .mon-id (inj₂ b) = cong inj₂ (B .mon-id b)
 Sum A B .mon-comp (inj₁ a) = cong inj₁ (A .mon-comp a)
 Sum A B .mon-comp (inj₂ b) = cong inj₂ (B .mon-comp b)
+Sum A B .mon-cong (inj₁ a) eq = cong inj₁ (A .mon-cong a eq)
+Sum A B .mon-cong (inj₂ b) eq = cong inj₂ (B .mon-cong b eq)
 Sum A B .mon-Supp-id {ρ} (inj₁ a) p rewrite A .mon-Supp-id a p | A .mon-id a = refl
 Sum A B .mon-Supp-id {ρ} (inj₂ b) p rewrite B .mon-Supp-id b p | B .mon-id b = refl
 Sum A B .necc-suff (inj₁ a) = cong inj₁ (A .necc-suff a)
@@ -303,6 +315,7 @@ Mu A .necc-nat = {!!}
 Mu A .supp-suff x u             = {!!}
 Mu A .mon-Supp-suff x supp→ρ' u = {!!}
 Mu A .mon-comp x                = {!!}
+Mu A .mon-cong x eq                = {!!}
 Mu A .mon-Supp-id x p           = {!!}
 Mu A .necc-suff x               = {!!}
 
@@ -368,6 +381,7 @@ Nu A .supp-suff = {!!}
 Nu A .mon-Supp-suff = {!!}
 Nu A .mon-id x = {!!}
 Nu A .mon-comp = {!!}
+Nu A .mon-cong x eq = {!!}
 Nu A .mon-Supp-id = {!!}
 Nu A .necc-suff = {!!}
 Nu A .suff-nat f xs   = {!!}

@@ -49,12 +49,12 @@ record SPos (I : Set) : Set₁ where
     necc-suff : ∀ {ρ} (x : F ρ) →  mon (necc x) (suff x) ≡ x
 
 
-    suff-nat : ∀{ρ ρ'} → (f : ρ →̇  ρ') → ∀ (xs : F ρ)
-               → mon (mon-Supp f xs) (suff (mon f xs)) ≡ suff xs
+    suff-nat : ∀{ρ ρ'} → (f : ρ →̇  ρ') → ∀ (x : F ρ)
+               → mon (mon-Supp f x) (suff (mon f x)) ≡ suff x
 
 
-    necc-nat : ∀{ρ ρ'} → (f : ρ →̇  ρ') → ∀ (xs : F ρ) {i} → (p : Supp (mon f xs) i)
-               → necc (mon f xs) p ≡ f (necc xs (mon-Supp f xs p))
+    necc-nat : ∀{ρ ρ'} → (f : ρ →̇  ρ') → ∀ (x : F ρ) {i} → (p : Supp (mon f x) i)
+               → necc (mon f x) p ≡ f (necc x (mon-Supp f x p))
 
 {-
 

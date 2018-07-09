@@ -43,6 +43,7 @@ record SPos (I : Set) : Set₁ where
 
     -- If  f  and  f'  coincide on the support of  x
     -- then  mon f  and  mon f'  coincide on  x.
+    -- (Redundant, see def-mon-cong below.)
 
     mon-cong : ∀{ρ ρ'} {f f' : ρ →̇  ρ'} (x : F ρ)
       → (eq : ∀{i} y → f (necc x {i} y) ≡ f' (necc x {i} y))
@@ -104,6 +105,24 @@ record SPos (I : Set) : Set₁ where
       mon-Supp id x p                       ≡⟨ mon-Supp-id x p ⟩
       subst (λ y → Supp y i) (mon-id x) p   ≡⟨ subst-ext (λ v → Supp v i) mon-id p ⟩
       subst (λ f → Supp (f x) i) mon-id! p  ∎ where open ≡-Reasoning
+
+
+  -- If  f  and  f'  coincide on the support of  x
+  -- then  mon f  and  mon f'  coincide on  x.
+
+   -- This is a consequence of necc-suff (and mon-comp).
+
+  def-mon-cong : ∀{ρ ρ'} {f f' : ρ →̇  ρ'} (x : F ρ)
+      → (eq : ∀{i} y → f (necc x {i} y) ≡ f' (necc x {i} y))
+      → mon f x ≡ mon f' x
+  def-mon-cong {ρ} {ρ'} {f} {f'} x eq = begin
+    mon f x                        ≡⟨ cong (mon f) (sym (necc-suff x)) ⟩
+    mon f (mon (necc x) (suff x))  ≡⟨ mon-comp (suff x) ⟩
+    mon (f ∘ necc x) (suff x)      ≡⟨ cong {A = ∀ {i} u → ρ' i} (λ g → mon g (suff x)) (funExtH (funExt eq))  ⟩
+    mon (f' ∘ necc x) (suff x)     ≡⟨ sym (mon-comp (suff x)) ⟩
+    mon f' (mon (necc x) (suff x)) ≡⟨ cong (mon f') (necc-suff x) ⟩
+    mon f' x  ∎
+    where open ≡-Reasoning
 
 open SPos
 

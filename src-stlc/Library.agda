@@ -36,7 +36,7 @@ open import Relation.Binary.PropositionalEquality public using (_≡_; refl; sub
 postulate
   funExt : ∀{a b} → Extensionality a b
   funExt-β : ∀{a b} {A : Set a} {B : A → Set b} {f g : (x : A) → B x} →
-      (eq : ∀ x → f x ≡ g x) → ∀ a → (P : B a → Set) → ∀ u → subst (\ f → P (f a)) (funExt eq) u ≡ subst P (eq a) u
+      (eq : ∀ x → f x ≡ g x) → ∀ a → (P : B a → Set) → ∀ u → subst (λ f → P (f a)) (funExt eq) u ≡ subst P (eq a) u
 
 -- Function extensionality for hidden function
 

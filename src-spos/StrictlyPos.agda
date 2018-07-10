@@ -21,17 +21,23 @@ A →̇ B = ∀{i} (u : A i) → B i
 
 record SPos (I : Set) : Set₁ where
   field
+    -- I-ary functor
     F    : (ρ : I → Set) → Set
     mon  : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → F ρ'
 
+    -- Supp is, in terms of Container terminology, the set of content positions.
     Supp : ∀{ρ} (x : F ρ) (i : I) → Set
 
-    mon-Supp : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → Supp (mon ρ→ρ' x) →̇ Supp x
-
+    -- necc is the map from positions to content.
     necc : ∀{ρ} (x : F ρ) → Supp x →̇ ρ
+
+    -- suff is a "numbering" of the positions in a tree.
     suff : ∀{ρ} (x : F ρ) → F (Supp x)
 
+    mon-Supp : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → Supp (mon ρ→ρ' x) →̇ Supp x
     supp-suff : ∀{ρ} (x : F ρ) → Supp (suff x) →̇ Supp x
+
+    -- mon-Supp and supp-suff can be merged into a single law mon-Supp-suff
     mon-Supp-suff : ∀{ρ ρ'} (x : F ρ) (supp→ρ' : Supp x →̇ ρ') → Supp (mon supp→ρ' (suff x)) →̇ Supp x
 
 
@@ -43,6 +49,7 @@ record SPos (I : Set) : Set₁ where
 
     -- If  f  and  f'  coincide on the support of  x
     -- then  mon f  and  mon f'  coincide on  x.
+
     -- (Redundant, see def-mon-cong below.)
 
     mon-cong : ∀{ρ ρ'} {f f' : ρ →̇  ρ'} (x : F ρ)

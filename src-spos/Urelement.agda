@@ -25,13 +25,17 @@ record SBas (I : Set) : Set₁ where
   field
     suff : ∀{ρ} (x : F ρ) → F (Supp x)
 
-    mon-U : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') {x : F ρ} {i : I} {y : ρ i} (u : U x i y) → U (mon ρ→ρ' x) i (ρ→ρ' y)
+    mon-U  : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') {x : F ρ} {i : I} {y : ρ i}
+             (u : U x i y) → U (mon ρ→ρ' x) i (ρ→ρ' y)
+
+    anti-U : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') {x : F ρ} {i : I} {y' : ρ' i}
+             (u : U (mon ρ→ρ' x) i y') → ∃ λ y → U x i y × ρ→ρ' y ≡ y'
 
   mon-Supp : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → Supp x →̇ Supp (mon ρ→ρ' x)
   mon-Supp ρ→ρ' x = ρ→ρ' ×̇ mon-U ρ→ρ'
 
   anti-Supp : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → Supp (mon ρ→ρ' x) →̇ Supp x
-  anti-Supp ρ→ρ' x {i} s = {!proj₁ s!}
+  anti-Supp ρ→ρ' x {i} s = let y , u , eq = anti-U ρ→ρ' (proj₂ s) in y , u
 
   supp-suff : ∀{ρ} (x : F ρ) → Supp (suff x) →̇ Supp x
   supp-suff x = proj₁
@@ -56,6 +60,7 @@ record SBas (I : Set) : Set₁ where
     mon f' x  ∎
     where open ≡-Reasoning
 
+{-
 open SBas
 SB = SBas ∘ Fin
 
@@ -155,3 +160,8 @@ Mu A .suff x = 𝕎-map {!!} {!!} x
 Mu A .mon-id = {!!}
 Mu A .mon-comp = {!!}
 Mu A .necc-suff = {!!}
+
+-- -}
+-- -}
+-- -}
+-- -}

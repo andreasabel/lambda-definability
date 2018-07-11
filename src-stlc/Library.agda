@@ -22,7 +22,8 @@ open import Data.Sum                              public using (_⊎_; inj₁; i
 open import Data.Nat.Base                         public using (ℕ; zero; suc; _+_)
 open import Data.Fin                              public using (Fin; zero; suc; _≟_; fromℕ)
 open import Data.Vec                              public using (Vec; []; _∷_; lookup)
-open import Data.W                                public using (sup) renaming (W to 𝕎; map to 𝕎-map)
+open import Data.W                                public using (sup) renaming (W to 𝕎) hiding (module W)
+module 𝕎 = Data.W
 
 open import Function                              public using (id; _∘_; _∘′_; case_of_)
 
@@ -127,16 +128,10 @@ A →̇ B = ∀{i} (u : A i) → B i
 
 -- 𝕎 type
 
-𝕎-root : ∀ {a b} {A : Set a} {B : A → Set b} (w : 𝕎 A B) → A
-𝕎-root (sup x _) = x
-
-𝕎-child : ∀ {a b} {A : Set a} {B : A → Set b} (w : 𝕎 A B) → B (𝕎-root w) → 𝕎 A B
-𝕎-child (sup _ f) = f
-
 𝕎-eta : ∀ {a b} {A : Set a} {B : A → Set b} (w : 𝕎 A B) → 𝕎 A B
-𝕎-eta w = sup (𝕎-root w) (𝕎-child w)
+𝕎-eta w = sup (𝕎.head w) (𝕎.tail w)
 
-𝕎-map-id : ∀ {a b} {A : Set a} {B : A → Set b} (x : 𝕎 A B) → 𝕎-map id (λ a → id) x ≡ x
+𝕎-map-id : ∀ {a b} {A : Set a} {B : A → Set b} (x : 𝕎 A B) → 𝕎.map id (λ a → id) x ≡ x
 𝕎-map-id (sup x f) = hcong₂ sup refl (funExt (λ b → 𝕎-map-id (f b)))
 
 -- Path into a 𝕎-tree to a node that satisfies a property.
@@ -148,7 +143,7 @@ data EF𝕎 {a b p} {A : Set a} {B : A → Set b} (P : A → Set p) : 𝕎 A B �
 
 EF𝕎-map₀ : ∀ {a b c d p} {A : Set a} {B : A → Set b} {C : Set c} {D : C → Set d} {P : C → Set p}
          (A→C : A → C) (D→B : ∀ a → D (A→C a) → B a)
-  (w : 𝕎 A B) (p : EF𝕎 {B = D} P (𝕎-map A→C D→B w)) → EF𝕎 (P ∘ A→C) w
+  (w : 𝕎 A B) (p : EF𝕎 {B = D} P (𝕎.map A→C D→B w)) → EF𝕎 (P ∘ A→C) w
 EF𝕎-map₀ A→C D→B (sup x f) (here p)    = here p
 EF𝕎-map₀ A→C D→B (sup x f) (there i p) = there (D→B _ i) (EF𝕎-map₀ A→C D→B (f (D→B _ i)) p)
 
@@ -156,9 +151,17 @@ EF𝕎-map : ∀ {a b c d p q} {A : Set a} {B : A → Set b} {C : Set c} {D : C 
   (A→C : A → C)
   (D→B : ∀ a → D (A→C a) → B a)
   (P→Q : ∀ a → P (A→C a) → Q a)
-  (w : 𝕎 A B) (p : EF𝕎 {B = D} P (𝕎-map A→C D→B w)) → EF𝕎 Q w
+  (w : 𝕎 A B) (p : EF𝕎 {B = D} P (𝕎.map A→C D→B w)) → EF𝕎 Q w
 EF𝕎-map A→C D→B P→Q (sup x f) (here p)    = here (P→Q _ p)
 EF𝕎-map A→C D→B P→Q (sup x f) (there i p) = there (D→B _ i) (EF𝕎-map A→C D→B P→Q (f (D→B _ i)) p)
+
+-- EF𝕎-map : ∀ {a b c d p q} {A : Set a} {B : A → Set b} {C : Set c} {D : C → Set d} {P : A → Set p} {Q : C → Set q}
+--   (A→C : A → C)
+--   (D→B : ∀ a → D (A→C a) → B a)
+--   (P→Q : ∀ a → P a → Q (A→C a))
+--   (w : 𝕎 A B) (p : EF𝕎 P w) → EF𝕎 {B = D} Q (𝕎.map A→C D→B w)
+-- EF𝕎-map A→C D→B P→Q (sup x f) (here p)    = here (P→Q _ p)
+-- EF𝕎-map A→C D→B P→Q (sup x f) (there i p) = there {! (D→B _ i) !} (EF𝕎-map A→C D→B P→Q (f {! i !}) {! p !})
 
 𝕎-lookup : ∀ {a b p} {A : Set a} {B : A → Set b} {P : A → Set p}
   (w : 𝕎 A B) (p : EF𝕎 P w) → Σ A P

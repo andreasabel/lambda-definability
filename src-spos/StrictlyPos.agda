@@ -374,7 +374,7 @@ ext-⊤-mon-id = funExtH λ{ {zero} → refl ; {suc i} → refl }
 
 Mu-ζ : ∀{n} (A : SP (suc n)) {ρ}
   → (w : 𝕎 (A .F (ext ρ ⊤)) (λ x → A .Supp x zero))
-  → A .Supp (𝕎-root w) →̇ ext (λ i → EF𝕎 (λ x → A .Supp x (suc i)) (𝕎-eta w)) ⊤ --  ext (Mu A .Supp w) ⊤
+  → A .Supp (𝕎.head w) →̇ ext (λ i → EF𝕎 (λ x → A .Supp x (suc i)) (𝕎-eta w)) ⊤ --  ext (Mu A .Supp w) ⊤
 -- Mu-ζ {n} A {ρ} w = {! ext-⊤-mon here !}
 Mu-ζ {n} A {ρ} w {zero}  u = _
 Mu-ζ {n} A {ρ} w {suc i} u = here u
@@ -384,7 +384,7 @@ Mu+ A X ρ = 𝕎 (A .F (ext ρ X)) λ x → A .Supp x zero
 
 Mu+map⊤ : ∀{n} (A : SP (suc n)) {ρ ρ'} (ρ→ρ' : ρ →̇ ρ') {X : Set} (x : Mu+ A X ρ) → Mu+ A ⊤ ρ'
 Mu+map⊤ {n} A {ρ} {ρ'} ρ→ρ' {X} =
-  𝕎-map (A .mon λ{i} → ext-⊤-mon' ρ→ρ' {X} {i})
+  𝕎.map (A .mon λ{i} → ext-⊤-mon' ρ→ρ' {X} {i})
          (λ x → A .anti-Supp (λ{i} → ext-⊤-mon' ρ→ρ' {X} {i}) x)
 -- Mu+map : ∀{n} (A : SP (suc n)) {ρ ρ'} (ρ→ρ' : ρ →̇ ρ') {X Y : Set} (f : X → Y) (x : Mu+ A X ρ) → Mu+ A X ρ'
 -- Mu+map {n} A {ρ} {ρ'} ρ→ρ' {X} {Y} f w = {!𝕎-map (A .mon λ{i} → ext-⊤-mon ρ→ρ' {i})
@@ -393,7 +393,7 @@ Mu+map⊤ {n} A {ρ} {ρ'} ρ→ρ' {X} =
 {-# TERMINATING #-}
 Mu : ∀{n} (A : SP (suc n)) → SP n
 Mu A .F ρ  = 𝕎 (A .F (ext ρ ⊤)) λ x → A .Supp x zero
-Mu A .mon {ρ}{ρ'} ρ→ρ' = 𝕎-map (A .mon λ{i} → ext-⊤-mon ρ→ρ' {i})
+Mu A .mon {ρ}{ρ'} ρ→ρ' = 𝕎.map (A .mon λ{i} → ext-⊤-mon ρ→ρ' {i})
                                 (λ x → A .anti-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) x)
 
 Mu A .mon-id {ρ} x with A .mon {ext ρ ⊤} id | mon-id! A {ext ρ ⊤} | A .anti-Supp {ext ρ ⊤} id | anti-Supp-id! A {ext ρ ⊤}
@@ -411,7 +411,7 @@ Mu A .suff {ρ} (sup x f) = sup (A .mon (Mu-ζ A (sup x f)) (A .suff x)) λ p �
     r : 𝕎 (A .F (ext ρ ⊤)) (λ y → A .Supp y zero)
     r = f (A .anti-Supp-suff x (Mu-ζ A (sup x f)) p)
   in
-      𝕎-map (A .mon (λ {i} → α p {i}))
+      𝕎.map (A .mon (λ {i} → α p {i}))
         (β p) (Mu A .suff r)
   where
 

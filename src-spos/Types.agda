@@ -61,7 +61,7 @@ map (Var X) fs = lookupArr X fs
 map 0̂       fs ()
 map 1̂       fs = _
 map (a +̂ b) fs = map a fs +̇ map b fs
-map (a ×̂ b) fs = map a fs ×̇ map b fs
+map (a ×̂ b) fs = map a fs ×̇′ map b fs
 map (a →̂ b) fs g = map b fs ∘′ g
 map (μ̂ F) fs = {! mapMu (λ g → map F (g ∷ fs)) α !}
 map (ν̂ F) fs = {! mapNu (λ g → map F (g ∷ fs)) α !}

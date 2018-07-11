@@ -58,7 +58,11 @@ subst-ext P eq {x} h | refl | refl = refl
 
 -- Binary product of functions
 
-_×̇_ : ∀{A B C D : Set} → (A → C) → (B → D) → A × B → C × D
+_×̇′_ : ∀{A B C D : Set} → (A → C) → (B → D) → A × B → C × D
+f ×̇′ g = < f ∘ proj₁ , g ∘ proj₂ >
+
+_×̇_ : ∀{a b c d} {A : Set a} {B : A → Set b} {C : Set c} {D : C → Set d}
+      → (f : A → C) → (g : ∀{a} → B a → D (f a)) → Σ A B → Σ C D
 f ×̇ g = < f ∘ proj₁ , g ∘ proj₂ >
 
 -- Binary sum of functions

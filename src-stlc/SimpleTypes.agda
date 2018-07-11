@@ -73,7 +73,7 @@ CFun Δ Γ = C⦅ Δ ⦆ → C⦅ Γ ⦆
 R⦅_⦆ : ∀{Γ Δ} (τ : Δ ≤ Γ) → C⦅ Δ ⦆ → C⦅ Γ ⦆
 R⦅ id≤    ⦆ = id
 R⦅ weak τ ⦆ = R⦅ τ ⦆ ∘ proj₁
-R⦅ lift τ ⦆ = R⦅ τ ⦆ ×̇ id
+R⦅ lift τ ⦆ = R⦅ τ ⦆ ×̇′ id
 
 -- The second functor law for R⦅_⦆
 

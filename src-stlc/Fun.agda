@@ -68,8 +68,8 @@ kapp f τ a = λ d → f (τ d) (a d)
 
 -- Arity functors: interpretation of OPE as functions
 
-_×̇_ : ∀{A B C D : Set} → (A → C) → (B → D) → A × B → C × D
-(f ×̇ g) (x , y) = f x , g y
+_×̇′_ : ∀{A B C D : Set} → (A → C) → (B → D) → A × B → C × D
+(f ×̇′ g) (x , y) = f x , g y
 
 Mor : ∀{Γ Δ} (E : Δ ≤ Γ) → Set
 Mor {Γ} {Δ} E = C⦅ Δ ⦆ → C⦅ Γ ⦆
@@ -77,7 +77,7 @@ Mor {Γ} {Δ} E = C⦅ Δ ⦆ → C⦅ Γ ⦆
 Ar : ∀{Γ Δ} (E : Δ ≤ Γ) → Mor E
 Ar id≤ = id
 Ar (weak E) = Ar E ∘ proj₁
-Ar (lift E) = Ar E ×̇ id
+Ar (lift E) = Ar E ×̇′ id
 
 -- The second functor law for Ar
 

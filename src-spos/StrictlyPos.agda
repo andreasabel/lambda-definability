@@ -4,6 +4,8 @@
 module StrictlyPos where
 
 open import Library
+open import Data.List as List using (List; []; _∷_)
+import Data.List.Properties as ListProp
 
 subst-trans : ∀ {A : Set}{P : A → Set} {x y z : A} →
                 (p : x ≡ y) → (q : y ≡ z) → (xs : P x) →
@@ -132,6 +134,82 @@ record SPos (I : Set) : Set₁ where
     where open ≡-Reasoning
 
 open SPos
+
+-- Examples:
+
+-- Lists are a unary sp functor
+
+length-tabulate : ∀ n {a} {A : Set a} {f : Fin n → A} → List.foldr (λ _ → suc) 0 (List.tabulate f) ≡ n
+length-tabulate zero = refl
+length-tabulate (suc n) = cong suc (length-tabulate n)
+
+{-# REWRITE length-tabulate #-}
+-- {-# REWRITE ListProp.length-map #-}  -- not a legal rewrite rule since length is defined in terms of foldr
+
+foldr-map : ∀{a b c}{A : Set a} {B : Set b} {C : Set c}
+  (f : A → B) (cons : B → C → C) (nil : C) (xs : List A)
+  → List.foldr cons nil (List.map f xs) ≡ List.foldr (λ a → cons (f a)) nil xs
+foldr-map f cons nil []       = refl
+foldr-map f cons nil (x ∷ xs) = cong (cons (f x)) (foldr-map f cons nil xs)
+
+{-# REWRITE foldr-map #-}
+
+incr : ∀ n {m} (i : Fin m) → Fin (n + m)
+incr zero    i = i
+incr (suc n) i = suc (incr n i)
+
+
+fromℕ' : (n {m} : ℕ) → Fin (n + suc m)
+fromℕ' zero        = zero
+fromℕ' (suc n) {m} = suc (fromℕ' n {m})
+
+incr-zero : ∀ n {m} → incr n (zero {m}) ≡ fromℕ' n
+incr-zero zero = refl
+incr-zero (suc n) = cong suc (incr-zero n)
+
+{-# REWRITE incr-zero #-}
+
+{-# REWRITE ListProp.foldr-++ #-}
+
+foldr-suc-length : ∀{a}{A : Set a} (xs {ys} : List A)
+  → List.foldr (λ _ → suc) (List.length ys) xs ≡ List.length xs + List.length ys
+foldr-suc-length [] = refl
+foldr-suc-length (x ∷ xs) {ys} = cong suc (foldr-suc-length xs {ys})
+
+{-# REWRITE foldr-suc-length #-}
+
+map-lookup-tabulate : ∀{a} {A : Set a} (xs ys : List A)
+  → List.map (List.lookup (xs List.++ ys)) (List.tabulate (incr (List.length xs))) ≡ ys
+map-lookup-tabulate xs [] = refl
+map-lookup-tabulate xs (y ∷ ys) = {!cong₂ List._∷_ ? ?!}
+
+{-# REWRITE map-lookup-tabulate #-}
+
+map-lookup-allFin : ∀{a}{A : Set a} (xs : List A)
+  → List.map (List.lookup xs) (List.allFin (List.length xs)) ≡ xs
+map-lookup-allFin [] = refl
+map-lookup-allFin (x ∷ xs) = cong (x ∷_) {!!}
+
+{-# REWRITE map-lookup-allFin #-}
+
+List-SP : SPos ⊤
+List-SP .F X = List (X _)
+List-SP .mon f = List.map f
+List-SP .Supp {ρ} xs _ = Fin (List.length xs) -- ρ _
+List-SP .mon-Supp f xs u = u -- subst Fin (ListProp.length-map f xs) u -- id
+List-SP .necc xs u = List.lookup xs u
+List-SP .suff xs = List.allFin (List.length xs)
+List-SP .supp-suff x u = u -- id
+List-SP .mon-Supp-suff xs supp→ρ' u = u
+List-SP .mon-id = ListProp.map-id
+List-SP .mon-comp = {!!}
+List-SP .mon-cong = {!!}
+List-SP .mon-Supp-id = {!!}
+List-SP .necc-suff {ρ} xs = {! refl !}  -- fails on reload!?
+List-SP .suff-nat f x = {!!}
+List-SP .necc-nat = {!!}
+
+{-
 
 -- Constructions on SPos
 

@@ -180,7 +180,7 @@ map-lookup-tabulate : ∀{a} {A : Set a} (xs ys : List A)
 map-lookup-tabulate xs [] = refl
 map-lookup-tabulate xs (y ∷ ys) = {!cong₂ List._∷_ ? ?!}
 
-{-# REWRITE map-lookup-tabulate #-}
+-- {-# REWRITE map-lookup-tabulate #-}
 
 map-lookup-allFin : ∀{a}{A : Set a} (xs : List A)
   → List.map (List.lookup xs) (List.allFin (List.length xs)) ≡ xs
@@ -194,7 +194,8 @@ List-SP .F X = List (X _)
 List-SP .mon f = List.map f
 List-SP .Supp {ρ} xs _ = Fin (List.length xs) -- ρ _
 List-SP .mon-Supp f xs u = u -- subst Fin (ListProp.length-map f xs) u -- id
-List-SP .necc xs u = List.lookup xs u
+List-SP .necc xs {i} = {! List.lookup xs !}
+-- List-SP .necc xs u = List.lookup xs u  -- FAILS rewriting
 List-SP .suff xs = List.allFin (List.length xs)
 List-SP .supp-suff x u = u -- id
 List-SP .mon-Supp-suff xs supp→ρ' u = u
@@ -202,11 +203,9 @@ List-SP .mon-id = ListProp.map-id
 List-SP .mon-comp = {!!}
 List-SP .mon-cong = {!!}
 List-SP .mon-Supp-id = {!!}
-List-SP .necc-suff {ρ} xs = {! refl !}  -- fails on reload!?
+List-SP .necc-suff {ρ} xs =  {! refl !}   -- fails on reload!?
 List-SP .suff-nat f x = {!!}
 List-SP .necc-nat = {!!}
-
-{-
 
 -- Constructions on SPos
 

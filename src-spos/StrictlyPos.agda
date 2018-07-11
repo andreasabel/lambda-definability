@@ -33,14 +33,16 @@ record SPos (I : Set) : Set₁ where
     -- suff is a "numbering" of the positions in a tree.
     suff : ∀{ρ} (x : F ρ) → F (Supp x)
 
+    mon-Supp  : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → Supp x →̇ Supp (mon ρ→ρ' x)
+
     anti-Supp : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) → Supp (mon ρ→ρ' x) →̇ Supp x
+
     supp-suff : ∀{ρ} (x : F ρ) → Supp (suff x) →̇ Supp x
 
     -- anti-Supp and supp-suff can be merged into a single law anti-Supp-suff
     anti-Supp-suff : ∀{ρ ρ'} (x : F ρ) (supp→ρ' : Supp x →̇ ρ') → Supp (mon supp→ρ' (suff x)) →̇ Supp x
 
-
-    -- Laws
+    -- Equational laws
 
     mon-id : ∀{ρ} x → mon {ρ} id x ≡ x
     mon-comp : ∀ {ρ₁ ρ₂ ρ₃} {ρ₂→ρ₃ : ρ₂ →̇  ρ₃} {ρ₁→ρ₂ : ρ₁ →̇  ρ₂} →
@@ -62,11 +64,16 @@ record SPos (I : Set) : Set₁ where
 
     necc-suff : ∀ {ρ} (x : F ρ) →  mon (necc x) (suff x) ≡ x
 
+    -- suff (mon f x) ≡ mon (anti-Supp f) (suff x)
     suff-nat : ∀{ρ ρ'} → (f : ρ →̇  ρ') → ∀ (x : F ρ)
                → mon (anti-Supp f x) (suff (mon f x)) ≡ suff x
 
+    -- necc (mon f x) (anti-Supp f u) ≡ f (necc x u)
     necc-nat : ∀{ρ ρ'} → (f : ρ →̇  ρ') → ∀ (x : F ρ) {i} → (p : Supp (mon f x) i)
                → necc (mon f x) p ≡ f (necc x (anti-Supp f x p))
+
+    necc-nat' : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) {i} (p : Supp x i) →
+      ρ→ρ' (necc x p) ≡ necc (mon ρ→ρ' x) (mon-Supp ρ→ρ' x p)
 
 {-
 
@@ -127,6 +134,15 @@ record SPos (I : Set) : Set₁ where
     mon f' (mon (necc x) (suff x)) ≡⟨ cong (mon f') (necc-suff x) ⟩
     mon f' x  ∎
     where open ≡-Reasoning
+
+  -- Urelement (support) relation
+
+  U    : ∀{ρ} (x : F ρ) (i : I) (y : ρ i) → Set
+  U x i y = ∃ λ (p : Supp x i) → y ≡ necc x {i} p
+
+  mon-U  : ∀{ρ ρ'} (ρ→ρ' : ρ →̇ ρ') (x : F ρ) {i : I} {y : ρ i}
+             (u : U x i y) → U (mon ρ→ρ' x) i (ρ→ρ' y)
+  mon-U ρ→ρ' x (u , refl) = mon-Supp ρ→ρ' x u , necc-nat' ρ→ρ' x u
 
 open SPos
 
@@ -191,6 +207,7 @@ List-SP : SPos ⊤
 List-SP .F X = List (X _)
 List-SP .mon f = List.map f
 List-SP .Supp {ρ} xs _ = Fin (List.length xs) -- ρ _
+List-SP .mon-Supp f xs = id
 List-SP .anti-Supp f xs u = u -- subst Fin (ListProp.length-map f xs) u -- id
 List-SP .necc xs {i} = {! List.lookup xs !}
 -- List-SP .necc xs u = List.lookup xs u  -- FAILS rewriting
@@ -204,6 +221,7 @@ List-SP .anti-Supp-id = {!!}
 List-SP .necc-suff {ρ} xs =  {! refl !}   -- fails on reload!?
 List-SP .suff-nat f x = {!!}
 List-SP .necc-nat = {!!}
+List-SP .necc-nat' = {!!}
 
 -- Constructions on SPos
 
@@ -227,6 +245,7 @@ Var : ∀{n} (i : Fin n) → SP n
 Var i .F ρ = ρ i
 Var i .mon ρ→ρ' x = ρ→ρ' x
 Var i .Supp _ j = δ i j
+Var i .mon-Supp ρ→ρ' _ = id
 Var i .anti-Supp ρ→ρ' _ = id
 Var i .necc x {j} u with i ≟ j
 Var i .necc x {.i} _ | yes refl = x
@@ -240,9 +259,14 @@ Var i .mon-cong x eq = eq {i} _
 Var i .anti-Supp-id {ρ} _ _ = refl
 Var i .necc-suff x = refl
 Var i .suff-nat = λ f xs → refl
+
 Var i .necc-nat f xs {j} p with i ≟ j
 Var i .necc-nat f xs {.i} p | yes refl = refl
 Var i .necc-nat f xs {j} () | no ¬p
+
+Var i .necc-nat' f xs {j} p with i ≟ j
+Var i .necc-nat' f xs {j} p | yes refl = refl
+Var i .necc-nat' f xs {j} () | no ¬p
 
 -- Constant types have empty support
 
@@ -250,6 +274,7 @@ Const : ∀ (A : Set) {I} → SPos I
 Const A .F _ = A
 Const A .mon _ = id
 Const A .Supp _ _ = ⊥
+Const A .mon-Supp _ _ = id
 Const A .anti-Supp _ _ = id
 Const A .necc _ ()
 Const A .suff = id
@@ -262,6 +287,7 @@ Const A .anti-Supp-id _ _ = refl
 Const A .necc-suff x = refl
 Const A .suff-nat = λ f xs → refl
 Const A .necc-nat f xs ()
+Const A .necc-nat' f xs ()
 
 Empty = Const ⊥
 Unit  = Const ⊤
@@ -270,6 +296,7 @@ Fun : ∀ (A : Set) {I} (B : SPos I) → SPos I
 Fun A B .F ρ                     = A → B .F ρ
 Fun A B .mon ρ→ρ' f a            = B .mon ρ→ρ' (f a)
 Fun A B .Supp f i                = ∃ λ (a : A) → B .Supp (f a) i
+Fun A B .mon-Supp ρ→ρ' f (a , u) = a , B .mon-Supp ρ→ρ' (f a) u
 Fun A B .anti-Supp ρ→ρ' f (a , u) = a , B .anti-Supp ρ→ρ' (f a) u
 Fun A B .necc f (a , u)          = B .necc (f a) u
 Fun A B .suff f a                = B .mon (a ,_) (B .suff (f a))
@@ -291,6 +318,7 @@ Fun A B .necc-suff f = funExt λ a →
   B .mon (B .necc (f a)) (B .suff (f a))                    ≡⟨ B .necc-suff (f a) ⟩
   f a                                                       ∎ where open ≡-Reasoning -- {!B .necc-suff!}
 Fun A B .necc-nat f xs p = B .necc-nat f (xs (p .proj₁)) (p .proj₂)
+Fun A B .necc-nat' f xs p = B .necc-nat' f (xs (p .proj₁)) (p .proj₂)
 Fun A B .suff-nat f xs = funExt (λ x → trans (trans (B .mon-comp (B .suff (B .mon f (xs x))))
                                 ((sym ((B .mon-comp (B .suff (B .mon f (xs x))))))))
                                 (cong (B .mon (λ {_} section → x , section)) (B .suff-nat f (xs x))))
@@ -299,6 +327,7 @@ Prod : ∀{I} (A B : SPos I) → SPos I
 Prod A B .F ρ                            = A .F ρ × B .F ρ
 Prod A B .mon ρ→ρ' (a , b)               = A .mon ρ→ρ' a , B .mon ρ→ρ' b
 Prod A B .Supp (a , b) i                 = A .Supp a i ⊎ B .Supp b i
+Prod A B .mon-Supp ρ→ρ' (a , b)          = A .mon-Supp ρ→ρ' a +̇ B .mon-Supp ρ→ρ' b
 Prod A B .anti-Supp ρ→ρ' (a , b)          = A .anti-Supp ρ→ρ' a +̇ B .anti-Supp ρ→ρ' b
 Prod A B .necc (a , b)                   = [ A .necc a , B .necc b ]
 Prod A B .suff (a , b)                   = A .mon inj₁ (A .suff a) , B .mon inj₂ (B .suff b)
@@ -320,12 +349,15 @@ Prod A B .suff-nat f xs = cong₂ _,_ (trans (A .mon-comp (A .suff _)) (trans (s
                                     (trans (B .mon-comp (B .suff _)) (trans (sym (B .mon-comp {ρ₂→ρ₃ = inj₂} (B .suff _))) (cong (B .mon inj₂) (B .suff-nat f (xs .proj₂)))))
 Prod A B .necc-nat f xs (inj₁ x) = A .necc-nat f (xs .proj₁) x
 Prod A B .necc-nat f xs (inj₂ y) = B .necc-nat f (xs .proj₂) y
+Prod A B .necc-nat' f xs (inj₁ x) = A .necc-nat' f (xs .proj₁) x
+Prod A B .necc-nat' f xs (inj₂ y) = B .necc-nat' f (xs .proj₂) y
 
 {-# TERMINATING #-}
 Sum : ∀{I} (A B : SPos I) → SPos I
 Sum A B .F ρ                      = A .F ρ ⊎ B .F ρ
 Sum A B .mon ρ→ρ'                 = A .mon ρ→ρ' +̇ B .mon ρ→ρ'
 Sum A B .Supp {ρ}                 = [ A .Supp {ρ} , B .Supp {ρ} ]
+Sum A B .mon-Supp ρ→ρ'            = [ A .mon-Supp ρ→ρ' , B .mon-Supp ρ→ρ' ]
 Sum A B .anti-Supp ρ→ρ'            = [ A .anti-Supp ρ→ρ' , B .anti-Supp ρ→ρ' ]
 Sum A B .necc {ρ}                 = [ A .necc {ρ} , B .necc {ρ} ]
 -- NOT POSSIBLE BECAUSE OF DEPENDENCY: Sum A B .suff {ρ} = A .suff {ρ} +̇ B .suff {ρ}
@@ -349,6 +381,8 @@ Sum A B .suff-nat f (inj₁ x) = cong inj₁ (A .suff-nat f x)
 Sum A B .suff-nat f (inj₂ y) = cong inj₂ (B .suff-nat f y)
 Sum A B .necc-nat f (inj₁ x) p = A .necc-nat f x p
 Sum A B .necc-nat f (inj₂ y) p = B .necc-nat f y p
+Sum A B .necc-nat' f (inj₁ x) p = A .necc-nat' f x p
+Sum A B .necc-nat' f (inj₂ y) p = B .necc-nat' f y p
 
 ext : ∀{ℓ} {A : Set ℓ} {n} (ρ : Fin n → A) (x : A) (i : Fin (suc n)) → A
 ext ρ x zero = x
@@ -400,6 +434,11 @@ Mu A .mon-id {ρ} x with A .mon {ext ρ ⊤} id | mon-id! A {ext ρ ⊤} | A .an
 Mu A .mon-id {ρ} x | .id | refl | v | p rewrite funExt p = 𝕎-map-id x
 
 Mu A .Supp w i                = EF𝕎 (λ x → A .Supp x (suc i)) w
+Mu A .mon-Supp {ρ} ρ→ρ' x {i} = {! EF𝕎-map !}
+  -- (A .mon (λ{j} → ext-⊤-mon ρ→ρ' {j}))
+  -- (λ y → A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
+  -- (λ y → A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
+  -- x !}
 Mu A .anti-Supp {ρ} ρ→ρ' x {i} = EF𝕎-map
   (A .mon (λ{j} → ext-⊤-mon ρ→ρ' {j}))
   (λ y → A .anti-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
@@ -438,6 +477,7 @@ Mu A .suff {ρ} (sup x f) = sup (A .mon (Mu-ζ A (sup x f)) (A .suff x)) λ p �
   -- x' = A .mon (Mu-ζ A (sup x f)) (A .suff x)
 Mu A .suff-nat = {!!}
 Mu A .necc-nat = {!!}
+Mu A .necc-nat' = {!!}
 Mu A .supp-suff x u             = {!!}
 Mu A .anti-Supp-suff x supp→ρ' u = {!!}
 Mu A .mon-comp x                = {!!}
@@ -500,6 +540,11 @@ Nu : ∀{n} (A : SP (suc n)) → SP n
 Nu A .F ρ = 𝕄 (A .F (ext ρ ⊤)) (λ x → A .Supp x zero)
 Nu A .mon ρ→ρ' = 𝕄-map (A .mon λ{i} → ext-⊤-mon ρ→ρ' {i}) (λ x → A .anti-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) x)
 Nu A .Supp  m i = EF𝕄 (λ x → A .Supp x (suc i)) m
+Nu A .mon-Supp {ρ} ρ→ρ' x {i} = {! EF𝕄-map
+  (A .mon (λ{j} → ext-⊤-mon ρ→ρ' {j}))
+  (λ y → A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
+  (λ y → A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
+  x !}
 Nu A .anti-Supp {ρ} ρ→ρ' x {i} = EF𝕄-map
   (A .mon (λ{j} → ext-⊤-mon ρ→ρ' {j}))
   (λ y → A .anti-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
@@ -517,6 +562,7 @@ Nu A .anti-Supp-id = {!!}
 Nu A .necc-suff = {!!}
 Nu A .suff-nat f xs   = {!!}
 Nu A .necc-nat f xs p = {!!}
+Nu A .necc-nat' f xs p = {!!}
 
 inNu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Nu A .F ρ))) → Nu A .F ρ
 inNu A {ρ} t = inf (A .mon (λ{i} → ext-forget i) t) (A .necc t ∘ A .anti-Supp (λ{i} → ext-forget i) t)

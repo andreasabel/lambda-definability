@@ -34,12 +34,15 @@ mutual
     neVar : ∀ {Γ T} (x : Var T Γ) → Neutral (var x)
     neApp : ∀ {Γ T U} {t : Tm Γ (U ⇒ T)} {u : Tm Γ U}
       (ne : Neutral t) (nf : Normal u) → Neutral (app t u)
+    neFst : ∀ {Γ T U} {t : Tm Γ (U ×̂ T)} (ne : Neutral t) → Neutral (fst t)
+    neSnd : ∀ {Γ T U} {t : Tm Γ (U ×̂ T)} (ne : Neutral t) → Neutral (snd t)
 
   -- A normal form is a neutral unter a prefix of λ-abstractions.
 
   data Normal {Γ} : ∀ {T} (t : Tm Γ T) → Set where
-    nfNe  : ∀{T} {t : Tm Γ T} (ne : Neutral t) → Normal t
-    nfAbs : ∀{T U} {t : Tm (Γ ▷ U) T} (nf : Normal t) → Normal (abs t)
+    nfNe   : ∀{T} {t : Tm Γ T} (ne : Neutral t) → Normal t
+    nfAbs  : ∀{T U} {t : Tm (Γ ▷ U) T} (nf : Normal t) → Normal (abs t)
+    nfPair : ∀{T U} {t : Tm Γ U} {u : Tm Γ T} (nf₁ : Normal t) (nf₂ : Normal u) → Normal (pair t u)
 
 -- Weakening normal forms
 
@@ -48,10 +51,13 @@ mutual
   wkNe (neCon c)     τ = neCon c
   wkNe (neVar x)     τ = neVar _
   wkNe (neApp ne nf) τ = neApp (wkNe ne τ) (wkNf nf τ)
+  wkNe (neFst ne)    τ = neFst (wkNe ne τ)
+  wkNe (neSnd ne)    τ = neSnd (wkNe ne τ)
 
   wkNf : ∀{Γ Δ T} {t : Tm Γ T} (nf : Normal t) (τ : Δ ≤ Γ) → Normal (t w[ τ ]ᵉ)
   wkNf (nfNe  ne) τ = nfNe (wkNe ne τ)
   wkNf (nfAbs nf) τ = nfAbs (wkNf nf _)
+  wkNf (nfPair nf₁ nf₂) τ = nfPair (wkNf nf₁ τ) (wkNf nf₂ τ)
 
 -- A syntactical KLP: being the image of a normal form.
 
@@ -75,6 +81,9 @@ neImgToNf (neImg ne eq) = nfImg (nfNe ne) eq
 nfImgAbs : ∀{Γ T U f} → NfImg (Γ ▷ U) T f → NfImg Γ (U ⇒ T) (curry f)
 nfImgAbs (nfImg nf ⦅nf⦆≡f) = nfImg (nfAbs nf) (cong curry ⦅nf⦆≡f)
 
+nfImgPair : ∀ {Γ U T f} → NfImg Γ U (proj₁ ∘ f) → NfImg Γ T (proj₂ ∘ f) → NfImg Γ (U ×̂ T) f
+nfImgPair (nfImg t ⦅t⦆≡f) (nfImg u ⦅u⦆≡g) = nfImg (nfPair t u) (cong₂ <_,_> ⦅t⦆≡f ⦅u⦆≡g)
+
 -- A Kripke model of images of normal forms.
 -- At base type, a normal form is necessarily neutral.
 
@@ -93,10 +102,12 @@ module _ (open STLC-KLP-Ext NfKLP-Base) where
     reflectNe (base b) ne = neImg ne refl
     reflectNe (U ⇒ T) ne τ ⟦d⟧ with reifyNf U ⟦d⟧
     ... | nfImg nf refl = reflectNe T (neApp (wkNe ne τ) nf) -- REWRITE wk-eval
+    reflectNe (U ×̂ T) ne = reflectNe U (neFst ne) , reflectNe T (neSnd ne)
 
     reifyNf : ∀{Γ} T {f : Fun Γ T} (⟦f⟧ : T⟦ T ⟧ Γ f) → NfImg Γ T f
     reifyNf (base b) ⟦f⟧ = neImgToNf ⟦f⟧
     reifyNf (U ⇒ T) ⟦f⟧ = nfImgAbs (reifyNf T (⟦f⟧ (weak id≤) (reflectNe U (neVar vz))))
+    reifyNf (U ×̂ T) (⟦f⟧ , ⟦g⟧) = nfImgPair (reifyNf U ⟦f⟧) (reifyNf T ⟦g⟧)
 
 NfKLP : STLC-KLP
 NfKLP .STLC-KLP.klp-base = NfKLP-Base

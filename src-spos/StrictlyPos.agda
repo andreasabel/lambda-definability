@@ -18,9 +18,6 @@ subst-∃ refl u = refl
 
 -- _S_trictly _P_ositive functors have a well-behaved support
 
-_→̇_ : {I : Set} (A B : I → Set) → Set
-A →̇ B = ∀{i} (u : A i) → B i
-
 record SPos (I : Set) : Set₁ where
   field
     -- I-ary functor
@@ -360,6 +357,14 @@ ext : ∀{ℓ} {A : Set ℓ} {n} (ρ : Fin n → A) (x : A) (i : Fin (suc n)) �
 ext ρ x zero = x
 ext ρ x (suc i) = ρ i
 
+ext-forget : ∀{n ρ A} i → ext {n = n} ρ A i → ext ρ ⊤ i
+ext-forget zero    = _
+ext-forget (suc _) = id
+
+ext-⊤-mon' : ∀{n}{ρ ρ' : Fin n → Set} (ρ→ρ' : ρ →̇ ρ') {X : Set} → ext ρ X →̇ ext ρ' ⊤
+ext-⊤-mon' ρ→ρ' {X} {zero} = _
+ext-⊤-mon' ρ→ρ' {X} {suc i} = ρ→ρ'
+
 ext-⊤-mon : ∀{n}{ρ ρ' : Fin n → Set} (ρ→ρ' : ρ →̇ ρ') → ext ρ ⊤ →̇ ext ρ' ⊤
 ext-⊤-mon ρ→ρ' {zero} = _
 ext-⊤-mon ρ→ρ' {suc i} = ρ→ρ'
@@ -369,6 +374,24 @@ ext-⊤-mon-id : ∀{n} {ρ : Fin n → Set} → (λ{i} → ext-⊤-mon {n} {ρ}
 ext-⊤-mon-id = funExtH λ{ {zero} → refl ; {suc i} → refl }
 
 {-# REWRITE ext-⊤-mon-id #-}
+
+Mu-ζ : ∀{n} (A : SP (suc n)) {ρ}
+  → (w : 𝕎 (A .F (ext ρ ⊤)) (λ x → A .Supp x zero))
+  → A .Supp (𝕎-root w) →̇ ext (λ i → EF𝕎 (λ x → A .Supp x (suc i)) (𝕎-eta w)) ⊤ --  ext (Mu A .Supp w) ⊤
+-- Mu-ζ {n} A {ρ} w = {! ext-⊤-mon here !}
+Mu-ζ {n} A {ρ} w {zero}  u = _
+Mu-ζ {n} A {ρ} w {suc i} u = here u
+
+Mu+ : ∀{n} (A : SP (suc n)) (X : Set) (ρ : Fin n → Set) → Set
+Mu+ A X ρ = 𝕎 (A .F (ext ρ X)) λ x → A .Supp x zero
+
+Mu+map⊤ : ∀{n} (A : SP (suc n)) {ρ ρ'} (ρ→ρ' : ρ →̇ ρ') {X : Set} (x : Mu+ A X ρ) → Mu+ A ⊤ ρ'
+Mu+map⊤ {n} A {ρ} {ρ'} ρ→ρ' {X} =
+  𝕎-map (A .mon λ{i} → ext-⊤-mon' ρ→ρ' {X} {i})
+         (λ x → A .mon-Supp (λ{i} → ext-⊤-mon' ρ→ρ' {X} {i}) x)
+-- Mu+map : ∀{n} (A : SP (suc n)) {ρ ρ'} (ρ→ρ' : ρ →̇ ρ') {X Y : Set} (f : X → Y) (x : Mu+ A X ρ) → Mu+ A X ρ'
+-- Mu+map {n} A {ρ} {ρ'} ρ→ρ' {X} {Y} f w = {!𝕎-map (A .mon λ{i} → ext-⊤-mon ρ→ρ' {i})
+--                                 (λ x → A .mon-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) x)!}
 
 {-# TERMINATING #-}
 Mu : ∀{n} (A : SP (suc n)) → SP n
@@ -386,32 +409,28 @@ Mu A .mon-Supp {ρ} ρ→ρ' x {i} = EF𝕎-map
   (λ y → A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
   x
 Mu A .necc {ρ} x u = let x' , p = 𝕎-lookup x u in A .necc x' p
-Mu A .suff {ρ} (sup x f) = sup (A .mon ζ (A .suff x)) λ p →
+Mu A .suff {ρ} (sup x f) = sup (A .mon (Mu-ζ A (sup x f)) (A .suff x)) λ p →
   let
     r : 𝕎 (A .F (ext ρ ⊤)) (λ y → A .Supp y zero)
-    r = f (A .mon-Supp-suff x ζ p)
+    r = f (A .mon-Supp-suff x (Mu-ζ A (sup x f)) p)
   in
-      𝕎-map (A .mon (λ {i} → α p i))
-        (β {p}) (Mu A .suff r)
+      𝕎-map (A .mon (λ {i} → α p {i}))
+        (β p) (Mu A .suff r)
   where
-  ζ : A .Supp x →̇ ext (Mu A .Supp (sup x f)) ⊤
-  ζ {zero} = _
-  ζ {suc i} = here
 
-  -- agda was not happy about i being implicit when applying alpha
-  α : ∀ p → ∀ i
-      → ext (Mu A .Supp (f (A .mon-Supp-suff x ζ p))) ⊤ i
-      → ext (Mu A .Supp (sup x f))                    ⊤ i
-  α p i = ext-⊤-mon (there (A .mon-Supp-suff x ζ p)) {i}
+  α : ∀ p
+      → ext (Mu A .Supp (f (A .mon-Supp-suff x (Mu-ζ A (sup x f)) p))) ⊤
+      →̇ ext (Mu A .Supp (sup x f)) ⊤
+  α p {i} = ext-⊤-mon (there (A .mon-Supp-suff x (Mu-ζ A (sup x f)) p)) {i}
 
 
-  β : ∀ {p : A .Supp (A .mon ζ (A .suff x)) zero}
-        (s : A .F (ext (Mu A .Supp (f (A .mon-Supp-suff x ζ p))) ⊤))
-      → A .Supp (A .mon (λ {i} → α p i) s) zero
+  β : ∀ (p : A .Supp (A .mon (Mu-ζ A (sup x f)) (A .suff x)) zero)
+        (s : A .F (ext (Mu A .Supp (f (A .mon-Supp-suff x (Mu-ζ A (sup x f)) p))) ⊤))
+      → A .Supp (A .mon (λ {i} → α p {i}) s) zero
       → A .Supp s                          zero
-  β {p} s q = A .mon-Supp-suff s _
+  β p s q = A .mon-Supp-suff s _
     (subst (λ s → A .Supp s zero) (A .mon-comp (A .suff s))
-      (subst (λ s → A .Supp (A .mon ((λ {i} → α p i)) s) zero) (sym (A .necc-suff s)) q))
+      (subst (λ s → A .Supp (A .mon ((λ {i} → α p {i})) s) zero) (sym (A .necc-suff s)) q))
   -- β {p} s q = A .mon-Supp-suff s _ q''
   --   where
   --     q' = subst (λ s → A .Supp (A .mon ((λ {i} → α p i)) s) zero) (sym (A .necc-suff)) q
@@ -419,7 +438,7 @@ Mu A .suff {ρ} (sup x f) = sup (A .mon ζ (A .suff x)) λ p →
 
   -- Inlined for the sake of termination:
   -- x' : A .F (ext (Mu A .Supp (sup x f)) ⊤)
-  -- x' = A .mon ζ (A .suff x)
+  -- x' = A .mon (Mu-ζ A (sup x f)) (A .suff x)
 Mu A .suff-nat = {!!}
 Mu A .necc-nat = {!!}
 Mu A .supp-suff x u             = {!!}
@@ -429,11 +448,8 @@ Mu A .mon-cong x eq                = {!!}
 Mu A .mon-Supp-id x p           = {!!}
 Mu A .necc-suff x               = {!!}
 
-ext-forget : ∀{n ρ A} i → ext {n = n} ρ A i → ext ρ ⊤ i
-ext-forget zero    = _
-ext-forget (suc _) = id
-
 inMu : ∀{n} (A : SP (suc n)) {ρ} (t : A .F (ext ρ (Mu A .F ρ))) → Mu A .F ρ
+--  inMu A {ρ} t = {! Mu+map⊤ A (λ{i} → ext-⊤-mon' ? ? {i}) (sup t (A .necc t)) !}
 inMu A {ρ} t = sup (A .mon (λ{i} → ext-forget i) t) (A .necc t ∘ A .mon-Supp (λ{i} → ext-forget i) t)
 
 outMu : ∀{n} (A : SP (suc n)) {ρ} (t : Mu A .F ρ) → A .F (ext ρ (Mu A .F ρ))
@@ -448,17 +464,25 @@ outMu∘inMu {n} A {ρ} t =
   begin
   A .mon (out.ψ A (A .mon (λ {i} → ext-forget i) t) (λ x → A .necc t (A .mon-Supp (λ {i} → ext-forget i) t x)))
          (A .suff (A .mon (λ {i} → ext-forget i) t))
+
     ≡⟨ cong (\ (f : A .Supp (A .mon (λ {i} → ext-forget i) t) →̇ ext ρ (𝕎 (A .F (ext ρ ⊤)) (λ x → A .Supp x zero)))
                                                           → A .mon f (A .suff (A .mon (λ {i} → ext-forget i) t)))
                                 (funExtH \ { {zero} → refl ; {suc i} → funExt (\ p → A .necc-nat (λ {i₁} → ext-forget i₁) t p) }) ⟩
+
   A .mon (λ {i} → (A .necc t) ∘ A .mon-Supp (λ {i} → ext-forget i) t)
          (A .suff (A .mon (λ {i} → ext-forget i) t))
+
     ≡⟨ sym (A .mon-comp (A .suff (A .mon (λ {i} → ext-forget i) t))) ⟩
+
   A .mon (A .necc t) (A .mon (A .mon-Supp (λ {i} → ext-forget i) t)
          (A .suff (A .mon (λ {i} → ext-forget i) t)))
+
     ≡⟨ cong (A .mon _) (A .suff-nat ((λ {i} → ext-forget i)) t) ⟩
+
   A .mon (A .necc t) (A .suff t)
+
     ≡⟨ A .necc-suff t ⟩
+
   t ∎ where open ≡-Reasoning
 
 iterMu :  ∀{n} (A : SP (suc n)) {ρ} {C} (s : A .F (ext ρ C) → C) (t : Mu A .F ρ) → C
@@ -469,23 +493,22 @@ iterMu A {ρ} {C} s (sup x f) = s (A .mon (λ{i} → ψ {i}) (A .suff x))
   ψ {suc i} = A .necc x {suc i}
 
 
+Nu-ζ : ∀{n} (A : SP (suc n)) {ρ}
+  → (m : 𝕄 (A .F (ext ρ ⊤)) (λ x → A .Supp x zero))
+  → A .Supp (m .shape) →̇ ext (λ i → EF𝕄 (λ x → A .Supp x (suc i)) m) ⊤ --  ext (Nu A .Supp m) ⊤
+Nu-ζ {n} A {ρ} m {zero}  u = _
+Nu-ζ {n} A {ρ} m {suc i} u = here u
+
 Nu : ∀{n} (A : SP (suc n)) → SP n
 Nu A .F ρ = 𝕄 (A .F (ext ρ ⊤)) (λ x → A .Supp x zero)
 Nu A .mon ρ→ρ' = 𝕄-map (A .mon λ{i} → ext-⊤-mon ρ→ρ' {i}) (λ x → A .mon-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) x)
-Nu A .Supp  w i = EF𝕄 (λ x → A .Supp x (suc i)) w
-Nu A .mon-Supp {ρ} {ρ'} ρ→ρ' = loop
-  where
-  loop : (x : Nu A .F ρ) → Nu A .Supp (Nu A .mon ρ→ρ' x) →̇ Nu A .Supp x
-  loop x (here p)    = here (A .mon-Supp (λ{i} → ext-⊤-mon ρ→ρ' {i}) (x .shape) p)
-  loop x (there i u) = there v (loop (x .child v) u)
-    where
-    v : A .Supp (x .shape) zero
-    v = A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) (x .shape) i
-Nu A .necc {ρ} = loop
-  where
-  loop : (x : Nu A .F ρ) → Nu A .Supp x →̇ ρ
-  loop x (here p)    = A .necc (x .shape) p
-  loop x (there i u) = loop (x .child i) u
+Nu A .Supp  m i = EF𝕄 (λ x → A .Supp x (suc i)) m
+Nu A .mon-Supp {ρ} ρ→ρ' x {i} = EF𝕄-map
+  (A .mon (λ{j} → ext-⊤-mon ρ→ρ' {j}))
+  (λ y → A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
+  (λ y → A .mon-Supp (λ {j} → ext-⊤-mon ρ→ρ' {j}) y)
+  x
+Nu A .necc {ρ} x u = let x' , p = 𝕄-lookup x u in A .necc x' p
 Nu A .suff = {!!}
 Nu A .supp-suff = {!!}
 Nu A .mon-Supp-suff = {!!}

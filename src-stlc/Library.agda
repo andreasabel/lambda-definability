@@ -19,7 +19,7 @@ open import Data.Unit                             public using (⊤)
 open import Data.Product                          public using (Σ; ∃; _×_; _,_; proj₁; proj₂; curry; <_,_>)
 open import Data.Sum                              public using (_⊎_; inj₁; inj₂; [_,_])
 
-open import Data.Nat.Base                         public using (ℕ; zero; suc)
+open import Data.Nat.Base                         public using (ℕ; zero; suc; _+_)
 open import Data.Fin                              public using (Fin; zero; suc; _≟_; fromℕ)
 open import Data.Vec                              public using (Vec; []; _∷_; lookup)
 open import Data.W                                public using (sup) renaming (W to 𝕎; map to 𝕎-map)
@@ -120,7 +120,21 @@ finCase' : ∀{ℓ} {n} (C : (i : Fin (suc n)) → Set ℓ)
 finCase' C z s zero    = z
 finCase' C z s (suc i) = s i
 
+-- Indexed function space
+
+_→̇_ : {I : Set} (A B : I → Set) → Set
+A →̇ B = ∀{i} (u : A i) → B i
+
 -- 𝕎 type
+
+𝕎-root : ∀ {a b} {A : Set a} {B : A → Set b} (w : 𝕎 A B) → A
+𝕎-root (sup x _) = x
+
+𝕎-child : ∀ {a b} {A : Set a} {B : A → Set b} (w : 𝕎 A B) → B (𝕎-root w) → 𝕎 A B
+𝕎-child (sup _ f) = f
+
+𝕎-eta : ∀ {a b} {A : Set a} {B : A → Set b} (w : 𝕎 A B) → 𝕎 A B
+𝕎-eta w = sup (𝕎-root w) (𝕎-child w)
 
 𝕎-map-id : ∀ {a b} {A : Set a} {B : A → Set b} (x : 𝕎 A B) → 𝕎-map id (λ a → id) x ≡ x
 𝕎-map-id (sup x f) = hcong₂ sup refl (funExt (λ b → 𝕎-map-id (f b)))
@@ -139,7 +153,9 @@ EF𝕎-map₀ A→C D→B (sup x f) (here p)    = here p
 EF𝕎-map₀ A→C D→B (sup x f) (there i p) = there (D→B _ i) (EF𝕎-map₀ A→C D→B (f (D→B _ i)) p)
 
 EF𝕎-map : ∀ {a b c d p q} {A : Set a} {B : A → Set b} {C : Set c} {D : C → Set d} {P : C → Set p} {Q : A → Set q}
-         (A→C : A → C) (D→B : ∀ a → D (A→C a) → B a) (P→Q : ∀ a → P (A→C a) → Q a)
+  (A→C : A → C)
+  (D→B : ∀ a → D (A→C a) → B a)
+  (P→Q : ∀ a → P (A→C a) → Q a)
   (w : 𝕎 A B) (p : EF𝕎 {B = D} P (𝕎-map A→C D→B w)) → EF𝕎 Q w
 EF𝕎-map A→C D→B P→Q (sup x f) (here p)    = here (P→Q _ p)
 EF𝕎-map A→C D→B P→Q (sup x f) (there i p) = there (D→B _ i) (EF𝕎-map A→C D→B P→Q (f (D→B _ i)) p)
@@ -198,3 +214,19 @@ module _ {a b c d} {A : Set a} {B : A → Set b} {C : Set c} {D : C → Set d}
 data EF𝕄 {a b p} {A : Set a} {B : A → Set b} (P : A → Set p) (m : 𝕄 A B) : Set (b ⊔ p) where
   here  : (p : P (m .shape)) → EF𝕄 P m
   there : (i : B (m .shape)) (p : EF𝕄 P (m .child i)) → EF𝕄 P m
+
+
+EF𝕄-map : ∀ {a b c d p q} {A : Set a} {B : A → Set b} {C : Set c} {D : C → Set d} {P : C → Set p} {Q : A → Set q}
+  (A→C : A → C)
+  (D→B : ∀ a → D (A→C a) → B a)
+  (P→Q : ∀ a → P (A→C a) → Q a)
+  (m : 𝕄 A B) (p : EF𝕄 {B = D} P (𝕄-map A→C D→B m)) → EF𝕄 Q m
+
+EF𝕄-map A→C D→B P→Q m (here p)    = here (P→Q _ p)
+EF𝕄-map A→C D→B P→Q m (there i p) = there (D→B _ i) (EF𝕄-map A→C D→B P→Q (m .child (D→B _ i)) p)
+
+
+𝕄-lookup : ∀ {a b p} {A : Set a} {B : A → Set b} {P : A → Set p}
+  (m : 𝕄 A B) (p : EF𝕄 P m) → Σ A P
+𝕄-lookup m (here p)    = m .shape , p
+𝕄-lookup m (there i p) = 𝕄-lookup (m .child i) p

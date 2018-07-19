@@ -19,6 +19,7 @@ module SimpleTypes (Base : Set) (B⦅_⦆ : Base → Set) where
 -- Simple types over a set of base types
 
 data Ty : Set where
+  N : Ty -- now with natural numbers
   base : (b : Base) → Ty
   _⇒_ _×̂_ : (U T : Ty) → Ty
 
@@ -53,6 +54,7 @@ lift τ ∙ lift τ′ = lift (τ ∙ τ′)
 -- Interpretation of types and contexts.
 
 T⦅_⦆ : Ty → Set
+T⦅ N ⦆ = ℕ
 T⦅ base b ⦆ = B⦅ b ⦆
 T⦅ U ⇒ T ⦆ = T⦅ U ⦆ → T⦅ T ⦆
 T⦅ U ×̂ T ⦆ = T⦅ U ⦆ × T⦅ T ⦆

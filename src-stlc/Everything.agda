@@ -20,6 +20,7 @@ import SimpleTypes
 -- 2d. Fundamental theorem of logical relations proving completeness
 
 import STLCDefinable
+import DefinitionalEquality
 
 -- 3. Adapting reflection/reification to obtain normalization
 
@@ -28,8 +29,8 @@ import NBE
 -- 4. Using Kripke predicates to refute STLC-definability...
 -- 4a. ... of boolean negation
 
-import NotNotDefinable
+-- import NotNotDefinable
 
 -- 4b. ... of an inhabitant of Peirce's formula
 
-import PeirceNotDefinable
+-- import PeirceNotDefinable

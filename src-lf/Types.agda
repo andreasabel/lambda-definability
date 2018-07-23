@@ -83,7 +83,8 @@ module Univ (TyC : Set) (Ind : TyC → Set) (F⦅_⦆ : (k : TyC) → Ind k → 
   KPred Γ A = ∀ {Δ} (σ : Mor Δ Γ) (f : Fun' Δ A σ) → Set₁
 
   Mon : ∀{Γ} (A : Ty Γ) (𝓐 : KPred Γ A) → Set₁
-  Mon {Γ} A 𝓐 = ∀ {Δ} {σ : Mor Δ Γ} {f : Fun' Δ A σ} (⟦f⟧ : 𝓐 σ f) {Φ} (σ′ : Mor Φ Δ) → 𝓐 (σ ∘ σ′) (f ∘ σ′)
+  Mon {Γ} A 𝓐 = ∀ {Δ} {σ : Mor Δ Γ} {f : Fun' Δ A σ} (⟦f⟧ : 𝓐 σ f) →
+                 ∀ {Φ} (σ′ : Mor Φ Δ) → 𝓐 (σ ∘ σ′) (f ∘ σ′)
 
   record LF-KLP-Base : Set₂ where
     field

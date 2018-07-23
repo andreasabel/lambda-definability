@@ -74,14 +74,14 @@ _×̇′_ : ∀{A B C D : Set} → (A → C) → (B → D) → A × B → C × D
 Mor : ∀{Γ Δ} (E : Δ ≤ Γ) → Set
 Mor {Γ} {Δ} E = C⦅ Δ ⦆ → C⦅ Γ ⦆
 
-Ar : ∀{Γ Δ} (E : Δ ≤ Γ) → Mor E
+R⦅_⦆ : ∀{Γ Δ} (E : Δ ≤ Γ) → Mor E
 Ar id≤ = id
 Ar (weak E) = Ar E ∘ proj₁
 Ar (lift E) = Ar E ×̇′ id
 
 -- The second functor law for Ar
 
-ar-comp : ∀{Γ Δ Φ} (τ : Δ ≤ Γ) (τ′ : Φ ≤ Δ) → Ar (τ ∙ τ′) ≡ R⦅ τ ⦆ ∘′ R⦅ τ′ ⦆
+ar-comp : ∀{Γ Δ Φ} (τ : Δ ≤ Γ) (τ′ : Φ ≤ Δ) → R⦅ τ ∙ τ′ ⦆ ≡ (R⦅ τ ⦆ ∘′ R⦅ τ′ ⦆)
 ar-comp τ id≤      = refl
 ar-comp τ (weak τ′) rewrite ar-comp τ τ′ = refl
 ar-comp id≤ (lift τ′) = refl

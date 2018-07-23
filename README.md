@@ -3,4 +3,4 @@ Lambda-definability and NBE for simply-typed lambda-calculus (STLC) and maybe be
 
 ## STLC
 
-[Agda HTML listing](https://andreasabel.github.io/lf-definability/stlc/Everything.html).
+[Agda HTML listing](https://andreasabel.github.io/lf-definability/stlc/html/Everything.html).

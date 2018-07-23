@@ -17,3 +17,5 @@ medium.bib
 /src-lf/Bug-Cannot-Intro-Abbrev.agda
 /src-lf/Bug-Name-Clash.agda
 /src-lf/Bug-Rewrite.agda
+/docs/
+/github-pages-token.txt

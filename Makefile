@@ -40,12 +40,18 @@ stlcagda = \
 
 # END stlcagda
 
-.PHONY : all debugMake html
+.PHONY : all debugMake html docs
 
 .PRECIOUS : %.dvi %.ps %.gz %.pdf %.tex
 
 
 default : lf-definability.pdf
+
+# Create html listings in docs/stlc
+docs :
+	make -C src-stlc deploy
+	mkdir -p docs/stlc
+	cp -r src-stlc/html/ docs/stlc/
 
 pack : lf-definability.zip
 

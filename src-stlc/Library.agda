@@ -22,8 +22,8 @@ open import Data.Sum                              public using (_⊎_; inj₁; i
 open import Data.Nat.Base                         public using (ℕ; zero; suc; _+_)
 open import Data.Fin                              public using (Fin; zero; suc; _≟_; fromℕ)
 open import Data.Vec                              public using (Vec; []; _∷_; lookup)
-open import Data.W                                public using (sup) renaming (W to 𝕎) hiding (module W)
-module 𝕎 = Data.W
+-- open import Data.W                                public using (sup) renaming (W to 𝕎) hiding (module W)
+-- module 𝕎 = Data.W
 
 open import Function                              public using (id; _∘_; _∘′_; case_of_)
 
@@ -127,6 +127,23 @@ _→̇_ : {I : Set} (A B : I → Set) → Set
 A →̇ B = ∀{i} (u : A i) → B i
 
 -- 𝕎 type
+
+module 𝕎 where
+
+  data 𝕎 {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
+    sup : (c : A) (f : B c → 𝕎 A B) → 𝕎 A B
+
+  head : ∀{a b} {A : Set a} {B : A → Set b} → 𝕎 A B → A
+  head (sup c f) = c
+
+  tail : ∀{a b} {A : Set a} {B : A → Set b} (w : 𝕎 A B) → B (head w) → 𝕎 A B
+  tail (sup c f) = f
+
+  map : ∀{a a' b b'} {A : Set a} {A' : Set a'} {B : A → Set b} {B' : A' → Set b'}
+    (f : A → A') (g : ∀ a → B' (f a) → B a ) → 𝕎 A B → 𝕎 A' B'
+  map f g (sup c h) = sup (f c) (map f g ∘ h ∘ g _)
+
+open 𝕎 public hiding (module 𝕎)
 
 𝕎-eta : ∀ {a b} {A : Set a} {B : A → Set b} (w : 𝕎 A B) → 𝕎 A B
 𝕎-eta w = sup (𝕎.head w) (𝕎.tail w)
@@ -233,3 +250,9 @@ EF𝕄-map A→C D→B P→Q m (there i p) = there (D→B _ i) (EF𝕄-map A→C
   (m : 𝕄 A B) (p : EF𝕄 P m) → Σ A P
 𝕄-lookup m (here p)    = m .shape , p
 𝕄-lookup m (there i p) = 𝕄-lookup (m .child i) p
+
+-- -}
+-- -}
+-- -}
+-- -}
+-- -}

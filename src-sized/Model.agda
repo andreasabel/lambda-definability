@@ -16,7 +16,7 @@ open import Size using (Size ; ↑_ ; ∞)
 
 open import Axioms using (funext)
 open import Ordinal using
-  (sup ; _≤_ ; _<_ ; lt ; refl) renaming
+  (sup ; tsuc ; _≤_ ; _<_ ; lt ; refl) renaming
   (Tree to Ordinal ; tomega to ω ; embℕ to ℕ→Ordinal)
 open import Ordinal.Container.Finite using
   (Mu ; monMu ; monMuℕ ; _≈_)
@@ -60,13 +60,15 @@ height′≤ω (sup (sh , pos)) = lt {!!} {!!}
 --------------------------------------------------------------------------------
 -- The isomorphism
 
+height? : ∀ {ℂ} (x : μ ℂ ∞) → Ordinal
+height? (sup (sh , pos)) = tsuc (sup _ \ p → height? (pos p))
 
-fwd : ∀ {ℂ} (x : μ ℂ ∞) → Mu (ℕ→Ordinal (height x)) ℂ
+fwd : ∀ {ℂ} (x : μ ℂ ∞) → Mu (height? x) ℂ
 fwd {ℂ} (sup (sh , pos))
   = _
   , sh
-  , λ p → monMuℕ
-      (Vec.max-maximal-∈ (Vec.∈-map⁺ height (Vec.∈-tabulate⁺ pos p)))
+  , λ p → monMu
+      (lt p refl)
       (fwd (pos p))
 
 -- This works because we can use monMuℕ to map each recursive occurrence into
@@ -78,6 +80,7 @@ fwd {ℂ} (sup (sh , pos))
 -- Alternative type:
 --   fwd : ∀ {ℂ s} (x : μ ℂ s) → Mu (ℕ→Ordinal (height x)) ⟦ ℂ ⟧
 
+{-
 
 bwd : ∀ {ℂ α} → Mu α ℂ → μ ℂ ∞
 bwd {ℂ} {sup I f} (i , pos) = sup (map (bwd {α = f i}) pos)
@@ -120,3 +123,5 @@ fwd∘bwd {ℂ@(S ▷ P)} {suc n} (_ , s , pos)
   , refl
   , Vec.All₂-tabulate⁺ λ x → {!!} -- monMu-mono liftEq (map ℂ) {!!} ? {t = fwd (bwd (pos x))} {t′ = pos x} {!!}
   )
+
+-}

@@ -25,7 +25,8 @@ bibliography=medium.bib
 
 # stdlib=$(HOME)/agda/std-lib/src
 
-agda=agda-2.6.0
+agda=agda
+# agda-2.6.0
 
 files=lf-definability.tex Makefile macros.tex
 
@@ -68,6 +69,9 @@ latex/%.tex : %.lagda
 
 talkAIM27.pdf : talkAIM27.tex macros.tex
 	pdflatex $<
+
+osem : talkOSem2019
+# osem : $(destdir)/talkOSem2019.pdf
 
 ship : shipTalk shipHtml
 
@@ -147,6 +151,8 @@ endif
 
 # Templates (reverted back to simple templates)
 
+$(destdir)/% : %
+	cp -p $< $(destdir)/
 
 talk% : talk%.pdf
 	cp -p $? $(destdir)/;

@@ -1,0 +1,1003 @@
+\nonstopmode
+\documentclass[t,fleqn,usenames,dvipsnames]{beamer}
+%\documentclass{article}\usepackage{beamerarticle}
+
+\makeatletter
+%\def\leqn{\tagsleft@true}
+%\def\reqn{\tagsleft@false}
+\def\fleq{\@fleqntrue\let\mathindent\@mathmargin \@mathmargin=\leftmargini}
+\def\cneq{\@fleqnfalse}
+\g@addto@macro{\endsubequations}{\addtocounter{equation}{-1}}
+\makeatother
+
+\mode<presentation>
+{
+  % \usetheme{AnnArbor}
+  \useinnertheme[shadow=true]{rounded}
+  \useoutertheme{infolines}
+  %\setbeamercolor*{title in head/foot}{parent=palette secondary}
+  %\useoutertheme{shadow}
+  \usecolortheme{wolverine}
+
+  \setbeamerfont{block title}{size={}}
+  \setbeamercolor{titlelike}{parent=structure,bg=yellow!85!orange}
+
+  % My modification: centered title with white background
+  \setbeamercolor{frametitle}{bg=white}
+  \setbeamertemplate{frametitle}{
+    %\begin{center}
+      \Large\insertframetitle
+      \vspace{1ex}
+      %\hline
+      \par
+    %\end{center}
+  }
+  % %% Does not work
+  % \setbeamercolor{frametitlecentered}{bg=white}
+  % \setbeamertemplate{frametitlecentered}{
+  %   \begin{center}
+  %     \Large\insertframetitle
+  %     \par
+  %   \end{center}
+  % }
+  % plus red emphasis
+  \setbeamercolor{alerted text}{fg=red!70!black}
+
+  % More space between items
+  %\defbeamertemplate*{itemize/enumerate body begin}{default}{\itemsep1ex}
+
+
+  \setbeamercolor{math text}{parent=titlelike}
+%  \setbeamercolor{math text displayed}{parent=palette primary}
+
+  % Fix background of theorems/proof
+  \setbeamercolor{block body}{parent=palette primary}%{bg=yellow!85!orange}
+  \setbeamercolor{block title}{parent=palette secondary}%{bg=orange}
+
+
+
+  \setbeamercovered{transparent}
+  % or whatever (possibly just delete it)
+
+} % end mode presentation
+
+%\usepackage{tcolorbox}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+%\usepackage{times}  % DYSFUNCTIONAL! looks awful when mixing mathtt and ordinary math.
+\usepackage{ifthen}
+%\usepackage[T1]{fontenc} %no effect
+% Or whatever. Note that the encoding and the font should match. If T1
+% does not look nice, try deleting the line with the fontenc.
+\usepackage{bbm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\usepackage{alltt}
+\usepackage[normalem]{ulem} % strikethrough \sout
+\usepackage{cancel} % strikethrough math mode \cancel
+%\usepackage{enumitem} % set label in itemize
+\usepackage{pifont} % for \tickNo
+%\usepackage{}
+%\usepackage{listings}
+\usepackage[all]{xy}
+%\usepackage{proof}
+%\usepackage{eurosym}
+%\usepackage{graphics}
+\usepackage{bibentry}
+%\nobibliography{short}
+\bibliographystyle{plain}
+%\input{prooftree}
+
+\newtheorem{takehomemessage}[theorem]{\textbf{Take home message}}
+
+%\usepackage{agda}
+%\AgdaNoSpaceAroundCode{}
+
+\DeclareMathSymbol{\chkmark}{\mathord}{AMSa}{"58}
+
+% RGB colors
+\definecolor{darkred}{rgb}{0.5,0,0}
+\definecolor{darkgreen}{rgb}{0,0.5,0}
+\definecolor{darkblue}{rgb}{0,0,0.5}
+\definecolor{dirtyred}{rgb}{0.7,0.2,0.1}
+\definecolor{dirtygreen}{rgb}{0.2,0.4,0.1}
+\definecolor{darkdirtygreen}{rgb}{0.13,0.25,0.07}
+\definecolor{dirtyblue}{rgb}{0.07,0.2,0.5}
+\definecolor{darkdirtyblue}{rgb}{0.1,0.15,0.35}
+\definecolor{lightblue}{rgb}{0.5,0.5,1}
+\definecolor{olivegreen}{rgb}{0.5,0.5,0}
+\definecolor{brown}{rgb}{0.65,0.35,0} % almost gold
+\definecolor{grey}{rgb}{0.33,0.33,0.33}
+\definecolor{darkbrown}{rgb}{0.35,0.15,0}
+\definecolor{darkgrey}{rgb}{0.16,0.16,0.16}
+
+\newcommand{\textred}[1]{{\color{dirtyred}\textbf{#1}}}
+
+%\newcommand{\tickYes}{{\color{darkgreen}\checkmark}} % does not work
+  %since checkmark invokes math mode
+\newcommand{\tickYes}{\ensuremath{\color{darkgreen}\chkmark}}
+\newcommand{\tickNo}{{\color{dirtyred}\hspace{1pt}\ding{55}}}
+
+%\usepackage[curve,matrix,arrow]{xy}
+%\usepackage{tikz} % Drawing diagrams
+%\usepackage{pgflibraryshapes} %Ellipses
+
+
+% MACROS:
+\newcommand{\inst}{}
+\newcommand{\tmc}[1]{\mathsf{#1}}
+\newcommand{\tmcol}[1]{\mathsf{#1}}
+\input{macros}
+
+\renewcommand{\Var}[2]{\tVar\;#1\;#2}
+\renewcommand{\ru}[2]{\dfrac{\begin{array}[b]{@{}c@{}} #1 \end{array}}{\begin{array}[t]{@{}l@{}} #2 \end{array}}}
+
+% black text in mbox
+\newcommand{\mybox}[1]{\mbox{\color{black}#1}}
+
+% meta-level logic
+\renewcommand{\mfor}{\ \mybox{for}\ }
+\renewcommand{\mforsome}{\ \mybox{for some}\ }
+\renewcommand{\mthen}{\ \mybox{then}\ }
+\renewcommand{\mif}{\ \mybox{if}\ }
+\renewcommand{\miff}{\ \mybox{iff}\ }
+\renewcommand{\motherwise}{\ \mybox{otherwise}}
+\renewcommand{\mundefined}{\mybox{undefined}}
+\renewcommand{\mnot}{\mybox{not}\ }
+\renewcommand{\mand}{\ \mybox{and}\ }
+\renewcommand{\mor}{\ \mybox{or}\ }
+\renewcommand{\mimplies}{\ \mybox{implies}\ }
+\renewcommand{\mimply}{\ \mybox{imply}\ }
+\renewcommand{\mforall}{\ \mybox{for all}\ }
+\renewcommand{\mexists}{\mybox{exists}\ }
+\renewcommand{\mexist}{\mybox{exist}\ }
+\renewcommand{\mtrue}{\mybox{true}}
+\renewcommand{\mwith}{\ \mybox{with}\ }
+\renewcommand{\mwhere}{\ \mybox{where}\ }
+\renewcommand{\mholds}{\ \mybox{holds}\ }
+\renewcommand{\munless}{\ \mybox{unless}\ }
+\renewcommand{\mboth}{\ \mybox{both}\ }
+\renewcommand{\msuchthat}{\ \mybox{such that}\ }
+% proofs
+\renewcommand{\msince}{\mybox{since}\ }
+\renewcommand{\mdef}{\mybox{by def.}}
+\renewcommand{\mass}{\mybox{assumption}}
+\renewcommand{\mhyp}{\mybox{by hyp.}}
+\renewcommand{\mlemma}[1]{\mybox{by Lemma~#1}}
+\renewcommand{\mih}[1][]{\mybox{by ind.hyp.}#1}
+\renewcommand{\mgoal}[1][]{\mybox{goal\ifthenelse{\equal{#1}{}}{}{~#1}}}
+\renewcommand{\mby}[1]{\mybox{by #1}}
+\renewcommand{\minfrule}{\mybox{by inference rule}}
+
+
+% \renewcommand{\tin}{\mathsf{inn}}
+% \renewcommand{\thead}{\cop{\mathsf{head}}}
+% \renewcommand{\ttail}{\cop{\mathsf{tail}}}
+% % start copattern color
+% \newcommand{\shead}{\cop{\mathsf{head}}}
+% \newcommand{\stail}{\cop{\mathsf{tail}}}
+% \newcommand{\phead}{\cop{\mathsf{.head}}}
+% \newcommand{\ptail}{\cop{\mathsf{.tail}}}
+% \newcommand{\vecQ}{\cop{\vec Q}}
+% \newcommand{\bDelta}{\boring{\Delta}}
+% \newcommand{\bcovered}{\mathrel{\boring{\ccovered}}}
+% \newcommand{\bA}{\boring{A}}
+% \newcommand{\bC}{\boring{C}}
+% \newcommand{\bder}{\mathrel{\boring{\vdash}}}
+% \newcommand{\bcolon}{\mathrel{\boring{:}}}
+% \newcommand{\blpar}{\boring{(}}
+% \newcommand{\brpar}{\boring{)}}
+% \renewcommand{\vbranches}{\boring{\mathit{branches}}}
+% \renewcommand{\tout}{\cop{\mathsf{out}}}
+% \renewcommand{\tforce}{\cop{\mathsf{force}}}
+% \newcommand{\kw}[1]{{\bf\texttt{#1}}}
+% \newcommand{\kwnewtype}{\kw{newtype}}
+% \newcommand{\kwrecord}{\kw{record}}
+% \newcommand{\kwwhere}{\kw{where}}
+% \newcommand{\kwinstance}{\kw{instance}}
+% \newcommand{\kwcoinductive}{\kw{coinductive}}
+% \newcommand{\kwCoInductive}{\kw{CoInductive}}
+% \newcommand{\kwCoFixpoint}{\kw{CoFixpoint}}
+% \newcommand{\kwfield}{\kw{field}}
+% \renewcommand{\tcase}{\mathbf{case}}
+% \renewcommand{\tof}{\mathbf{of}}
+% \renewcommand{\caseof}[3]{\tcase\,#1\,\tof~#2 \mathrel{\boldsymbol\To} #3}
+% \newcommand{\tthead}{\cop{\texttt{head}}}
+% \newcommand{\tttail}{\cop{\texttt{tail}}}
+\newcommand{\ONE}{\mathbf{1}}
+
+% DOES NOT WORK:
+% rule with "boring" default text
+\newcommand{\setboring}{\setbeamercolor{math text}{fg=grey}\setbeamercolor{math display}{fg=grey}}
+\newcommand{\bru}[2]{\setboring\dfrac{\setboring#1}{\setboring#2}}
+
+\renewcommand*\ttdefault{txtt} % for listing package
+
+% \newcommand{\defHaskelllistings}{%
+%   \lstset{%
+%     language=Haskell,%
+%     basicstyle=\ttfamily\small\color{darkdirtyblue},% \ttfamily
+%     keywordstyle=\ttfamily\bfseries,% \underbar
+%     identifierstyle=,%
+%     commentstyle=\itshape,%
+%     columns=flexible,%spaceflexible,% fixed,% flexible,%
+%     showstringspaces=false,%
+% %    xleftmargin=\codeindent,% defined below
+%     breaklines=true,%
+%     deletekeywords={succ,zero,head,tail,zipWith,Either,List},%
+%     morekeywords={Set,Size,fun,cofun,pattern},% ,left,right,nil,cons
+%     literate={\\}{{$\lambda$}}1 {->}{{$\rightarrow$~}}2
+%              {<=}{{$\leq$~}}2 {<}{{$<$~}}1
+% %     literate={map}{map~}4
+% %       {even}{even~}5
+% %       {odd}{odd~}4
+%      }%
+% }
+%\defHaskelllistings
+
+\title[Proof-Relevant Relations]{%
+On Proof-Relevant Relations and Evidence-Aware Programming}
+
+\author[Abel]{
+  Andreas Abel\inst{1}
+}
+% \author{Andreas Abel\inst{1}
+%   \and Brigitte Pientka\inst{2}
+%   \and David Thibodeau\inst{2}
+%   \and Anton Setzer\inst{3}
+% }
+%{F.~Author\inst{1} \and S.~Another\inst{2}}
+% - Give the names in the same order as the appear in the paper.
+% - Use the \inst{?} command only if the authors have different
+%   affiliation.
+
+\institute[] %Chalmers/GU/ENS Cachan] % (optional, but mostly needed)
+{
+  \inst{1}
+  Department of Computer Science and Engineering\\
+  Chalmers and Gothenburg University, Sweden \\[1ex]
+}
+%  \inst{1}%
+%  Department of Computer Science\\
+%  University of Somewhere
+%  \and
+%  \inst{2}%
+%  Department of Theoretical Philosophy\\
+%  University of Elsewhere}
+%% - Use the \inst command only if there are several affiliations.
+%% - Keep it simple, no one is interested in your street address.
+
+\date[OSem Jan 2019] % (optional, should be abbreviation of conference name)
+{ TCS Oberseminar \\
+  Ludwig-Maximilians-Universität München \\
+  11 January 2019
+}
+% - Either use conference name or its abbreviation.
+% - Not really informative to the audience, more for people (including
+%   yourself) who are reading the slides online
+
+%\subject{Software Verification}
+% This is only inserted into the PDF information catalog. Can be left
+% out.
+
+
+
+% If you have a file called "university-logo-filename.xxx", where xxx
+% is a graphic format that can be processed by latex or pdflatex,
+% resp., then you can add a logo as follows:
+
+% \pgfdeclareimage[height=0.5cm]{university-logo}{university-logo-filename}
+% \logo{\pgfuseimage{university-logo}}
+
+
+
+% Delete this, if you do not want the table of contents to pop up at
+% the beginning of each subsection:
+
+%\AtBeginSubsection[]
+%\AtBeginSection[]
+%{
+%  \begin{frame}<beamer>
+%    \frametitle{Outline}
+%    \tableofcontents[currentsection,currentsubsection]
+%  \end{frame}
+%}
+
+
+% If you wish to uncover everything in a step-wise fashion, uncomment
+% the following command:
+
+%\beamerdefaultoverlayspecification{<+->}
+
+\makeatletter
+\def\MLine#1{\par\vspace{1ex}\hspace*{-\@totalleftmargin}\parbox{\textwidth}{\[#1\]}}
+\makeatother
+%\newenvironment{display}{\par\vspace{1ex}\hspace*{-\@totalleftmargin}\parbox{\textwidth}{\[}{\]}}
+
+
+%\newcommand{\List}{\mathsf{List}}
+\renewcommand{\Set}{\mathsf{Set}}
+\newcommand{\Tree}{\mathsf{Tree}}
+%\newcommand{\Prop}{\mathsf{Prop}}
+%\newcommand{\Type}{\mathsf{Type}}
+%\newcommand{\Size}{\mathsf{Size}}
+%\newcommand{\tfix}{\mathsf{fix}}
+%\newcommand{\Int}{\mathsf{Int}}
+%\newcommand{\tnil}{\mathsf{nil}}
+%\newcommand{\tcons}{\mathsf{cons}}
+%\newcommand{\vas}{\mathit{as}}
+%\newcommand{\ttuple}[1]{(#1)}
+
+%\newcommand{\oford}{\of\tord} \newcommand{\oftype}{\of\ttype}
+\newcommand{\oford}{}         \newcommand{\oftype}{}
+\newenvironment{prg}{\begin{quotation}\begin{tabbing}}{\end{tabbing}\end{quotation}}
+
+% COLORS
+\newcommand{\cHead}{\color{darkblue}}
+\newcommand{\cSub}{\color{brown}}
+\newcommand{\cWhite}{\color{white}}
+\newcommand{\cGray}{\color{gray}}
+\newcommand{\cGreen}{\color{olivegreen}}
+\newcommand{\cBrown}{\color{brown}}
+\newcommand{\cBlack}{\color{black}}
+\newcommand{\black}[1]{{\cBlack#1}}
+
+\newcommand{\cAnn}{\color{red!80!black}}%purple darkblue
+\newcommand{\cAside}{\color{gray}}
+\newcommand{\cEnum}{\color{darkgreen}}
+\newcommand{\cEm}{\cAnn} %\color{red}}
+\newcommand{\cCo}{\cAnn} %\color{red}} % copattern color
+\newcommand{\cop}[1]{{\cCo#1}}
+\newcommand{\cApp}{\color{violet}}
+\newcommand{\capp}[1]{{\cApp#1}}
+\newcommand{\cFocus}{\color{darkgreen}}
+\newcommand{\focus}[1]{{\cFocus#1}}
+\newcommand{\cMath}{\usebeamercolor[fg]{math text}}
+\newcommand{\cIdent}{\usebeamercolor[fg]{math text}}
+\newcommand{\ident}[1]{{\cIdent#1}}
+\newcommand{\cExp}{\cIdent}
+\newcommand{\cBoring}{\color{grey}}
+\newcommand{\boring}[1]{{\cBoring#1}}
+
+%\newcommand{\ann}[1]{^{\cAnn #1}}
+\newcommand{\unn}[1]{_{\cAnn #1}}
+\newcommand{\annW}[1]{^{\hphantom{#1}}}
+%\newcommand{\Ann}[1]{{\cAnn #1}}
+\newcommand{\AnnW}[1]{\hphantom{#1}}
+\newcommand{\ttAnn}[1]{\{{\cAnn #1}\}}
+% ordinal annotation
+\newcommand{\cOrd}{\cAnn}
+\newcommand{\onn}[1]{^{\cOrd #1}}
+\newcommand{\Onn}[1]{{\cOrd #1}}
+\newcommand{\oforall}[1]{\forall\Onn{#1}.~}
+\newcommand{\oexists}[1]{\exists\Onn{#1}.~}
+\newcommand{\oapp}[1]{\,\Onn{#1}}
+\renewcommand{\emph}[1]{{\cAnn#1}}
+\newcommand{\OSize}{\Onn{Size}}
+\newcommand{\oi}{\Onn{i}}
+\newcommand{\odi}{\Onn{\$i}}
+\newcommand{\oddi}{\Onn{\$\$i}}
+\newcommand{\oj}{\Onn{j}}
+\newcommand{\ohash}{\Onn{\#}}
+
+% \newcommand{\kw}[1]{{\bf#1}}
+\newcommand{\kwdata}{\kw{data}}
+\newcommand{\kwcodata}{\kw{codata}}
+\newcommand{\kwsized}{\kw{sized}}
+\newcommand{\kwfun}{\kw{fun}}
+\newcommand{\kwcofun}{\kw{cofun}}
+\newcommand{\kwlet}{\kw{let}}
+\newcommand{\kwfields}{\kw{fields}}
+%\newcommand{\kw}{\kw{}}
+%\newcommand{\kw}{\kw{}}
+%\newcommand{\kw}{\kw{}}
+\newcommand{\tinl}{\mathsf{inl}}
+\newcommand{\tinr}{\mathsf{inr}}
+
+\renewcommand{\rulename}[1]{#1}
+
+% types
+\newcommand{\cType}{\color{orange!60!black}}
+
+
+% irrelevance
+\newcommand{\irr}{\mathord{\bullet}}
+\newcommand{\shirr}{\mathord{{\bullet}{\bullet}}}
+\renewcommand{\erhyp}[3][\irr]{#1#2 \of #3}
+\newcommand{\shirrhyp}{\erhyp[\shirr]}
+\renewcommand{\erfunT}[4][\irr]{(\erhyp[#1]{#2}{#3}) \to #4}
+\newcommand{\serfunT}[4][\irr]{(#1#2 : #3) \to #4}
+\renewcommand{\resurrect}[1]{\irr^{-1}(#1)}
+
+
+\newcommand{\mlsays}[1]{}
+% {\begin{frame}%[fragile=singleslide]
+%   %\frametitle{Himself}
+%   \begin{minipage}[c]{0.5\linewidth}
+%    \includegraphics[height=0.9\textheight]{martin-loef-bw.png}
+%   \end{minipage}% NO SPACE HERE!
+%   \begin{minipage}[c]{0.5\linewidth}
+%    \begin{center}
+%      \bla \\[8ex]
+%      \Huge #1
+%    \end{center}
+%   \end{minipage}
+% \end{frame}
+% }
+
+\newcommand{\JOKE}[1]{} % No jokes.
+\renewcommand{\emph}[1]{\textit{\cType#1}}
+
+\newcommand{\ope}{\twoheadrightarrow}
+
+\newcommand{\tcompare}{\mathsf{compare}}
+\newcommand{\tensor}{\otimes}
+\newcommand{\lolli}{\multimap}
+\newcommand{\bang}{\mathord{!}}
+\newcommand{\quest}{\mathord{?}}
+\newcommand{\WW}{\mathbb{W}}
+\newcommand{\LLL}{\List\,K \lolli \List\,K}
+\newcommand{\vks}{\mathit{ks}}
+\newcommand{\munit}{\mathbbm{1}}  % monoidal unit
+\newcommand{\aff}{{\{0,1\}}}
+\newcommand{\onetwo}{{\{1,2\}}}
+
+\DeclareMathOperator*{\amp}{\&}
+\DeclareMathOperator*{\bigamp}{\scalerel*{\&}{\sum}}
+\usepackage{scalerel}
+
+\begin{document}
+
+\maketitle
+%\begin{frame}
+%  \titlepage
+%\end{frame}
+
+%\begin{frame}
+%  \frametitle{Outline}
+%  \tableofcontents
+%  % You might wish to add the option [pausesections]
+%\end{frame}
+
+
+
+\section{Introduction}
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Proof-relevance and evidence manipulation}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Curry-Howard-Isomorphism (CHI):
+    \begin{itemize}
+    \item propsitions-as-types
+    \item proofs-as-programs
+    \end{itemize}
+  \item Dependently-typed programming languages implement the CHI:
+    e.g. Agda, Coq, Idris, Lean
+  \item Allows maintainance and processing of evidence.
+  \item For practical impact, we need a also programming culture;
+    c.f. GoF, \emph{Design Patterns: Elements of Reusable Object-Oriented Software}.
+  \end{itemize}
+\end{frame}
+
+\section{Lists}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{List membership}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Membership $a \in \vas$ inductively definable:
+\[
+  \nru{\tzero}{}{a \in (a :: \vas)}
+\qquad
+  \nru{\tsuc}{a \in \vas}{a \in (b :: \vas)}
+\]
+  \item Proofs of $a \in \vas$ are indices of $a$ in $\vas$ (unary
+    natural numbers).
+  \item Two different derivations of $3 \in (3 :: 7 :: 3 :: [])$,
+  correspond to the occurrences of $3$:
+\[
+  \begin{array}{rcl}
+\tzero & : & 3 \in (3 :: 7 :: 3 :: []) \\
+\suc{(\suc \tzero)}  & : & 3 \in (3 :: 7 :: 3 :: []) \\
+  \end{array}
+\]
+  \end{itemize}
+\end{frame}
+
+\newcommand{\sublist}{\subseteq}
+\newcommand{\tskip}{\mathsf{skip}}
+\newcommand{\tkeep}{\mathsf{keep}}
+\newcommand{\tdone}{\mathsf{done}}
+\newcommand{\vbs}{\mathit{bs}}
+\newcommand{\vcs}{\mathit{cs}}
+\newcommand{\tsgw}{\mathsf{sgw}}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Sublists}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Inductive sublist relation $\vas \sublist \vbs$:
+\[
+  \nru{\tskip}{\vas \sublist \vbs}{\vas \sublist (b :: \vbs)}
+\qquad
+  \nru{\tkeep}{\vas \sublist \vbs}{(a :: \vas) \sublist (a :: \vbs)}
+\qquad
+  \nru{\tdone}{}{[] \sublist []}
+\]
+  \item A proof of $\vas \sublist \vbs$ describes which elements of
+    $\vbs$ should be dropped ($\tskip$) to arrive at $\vas$.
+\[
+  \begin{array}{lcl}
+    \tskip\,(\tkeep\,\tdone) & : & (a :: []) \sublist (a :: a :: []) \\
+    \tkeep\,(\tskip\,\tdone) & : & (a :: []) \sublist (a :: a :: []) \\
+  \end{array}
+\]
+%  \item Sublist is reflexive and transitive.
+  \item $\sublist$ is a category.
+\[
+  \begin{array}{lcl@{\qquad}l}
+%    \tid_{\vas} & : & \vas \sublist \vas \\
+    \tid       & : & \vas \sublist \vas & \mbox{reflexivity} \\
+    \_\circ\_  & : & (\vas \sublist \vbs) \to (\vbs \sublist \vcs) \to
+                     (\vas \sublist \vcs) & \mbox{transitivity} \\
+  \end{array}
+\]
+  \item Single extension
+\[
+  \begin{array}{lcl}
+    \tsgw & : & \vas \sublist (a :: \vas) \\
+  \end{array}
+\]
+  \end{itemize}
+\end{frame}
+
+\newcommand{\treindex}{\mathsf{reindex}}
+\newcommand{\op}{\mathsf{op}}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Membership in sublists}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Membership is inherited from sublists:
+\[
+  \begin{array}{lcl}
+\treindex & : & (\vas \sublist \vbs) \to (a \in \vas) \to (a \in \vbs)
+  \end{array}
+\]
+%  \item $\treindex$
+adjusts the index of $a$ in $\vas$ to point to the
+    corresponding $a$ in $\vbs$.
+\\[2ex]
+  \item Trivium: $\treindex$ is a functor from $\_\sublist\_$ to
+    $(a \in \_) \to (a \in \_)$.
+  \item In category speak: $\treindex$ is a presheaf on $\sublist^\op$.
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Types, sets, propositions, singletons}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Our meta-language is (Martin-L\"of) type theory:
+   $a \in \vas$ and $\vas \sublist \vbs$ are \emph{types},
+   their proofs are \emph{inhabitants}.
+  \item Following Vladimir Voewodsky$\dagger$, types are
+    stratified by their \emph{h-level}
+    into singletons (0), propositions (1), sets (2),
+    groupoids (3), \dots.
+    \begin{enumerate}
+    \item A type with a unique inhabitant is a \emph{singleton}
+      (``contractible'').
+    \item A type with at most one inhabitant is a \emph{proposition}.
+      In other words, a type with contractible equality is a
+      proposition.
+    \item A type with propositional equality is a \emph{set}.
+    \item A type with a set equality is a \emph{groupoid}.
+    \end{enumerate}
+    A type is of h-level $n+1$ if its equality is of h-level $n$.
+  \item $\vas \sublist \vas$ is a singleton; so is $a \in (a :: [])$.
+  \item $\vas \sublist [\,]$ is a proposition; so is $a \in (b ::
+    [])$.
+  \item In general $a \in \vas$ and $\vas \sublist \vbs$ are sets.
+  \end{itemize}
+\end{frame}
+
+\section{Simply-Typed Lambda-Calculus}
+
+\newcommand{\tvar}{\mathsf{var}}
+\newcommand{\tapp}{\mathsf{app}}
+\newcommand{\tabs}{\mathsf{abs}}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Natural deduction}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Inference rules of intuitionstic implicational logic
+    $\Gamma \der A$:
+\[
+  \nru{\tvar}{A \in \Gamma}{\Gamma \der A}
+\qquad
+  \nru{\tapp
+     }{\Gamma \der A \To B \qquad \Gamma \der A
+     }{\Gamma \der B}
+\qquad
+  \nru{\tabs
+     }{(A :: \Gamma) \der B
+     }{\Gamma \der A \To B}
+\]
+  \item Derivations of $\Gamma \der A$ are simply-typed lambda-terms
+  with variables represented by de Bruijn indices $x : (A \in
+  \Gamma)$.
+\[
+  \begin{array}{lcl}
+t := \tapp\,(\tvar\,\tzero)\,(\tvar\,(\tsuc\,\tzero)) & : & (A \To B :: A ::
+    [] \der B) \\
+\tabs\,(\tabs\,t) & : & ([] \der A \To (A \To B) \To B) \\
+\tabs\,(\tabs\,(\tvar\,(\tsuc\,\tzero))) & : & A \To (A \To A) \\
+\tabs\,(\tabs\,(\tvar\,\tzero)) & : & A \To (A \To A) \\
+  \end{array}
+\]
+  \end{itemize}
+\end{frame}
+
+%\newcommand{\tweak}{\mathsf{weak}}
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Weakening}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Inferences stay valid under additional hypotheses
+    (monotonicity):
+\[
+  \begin{array}{lcl}
+    \tweak & : & (\Gamma \sublist \Delta) \to (\Gamma \der A) \to
+                 (\Delta \der A)
+  \end{array}
+\]
+%  \item $\tweak$
+  adjust indices of hypotheses ($\tvar$)
+\\[2ex]
+  \item $\tweak$ is a functor from $\_\sublist\_$ to
+    $(\_ \der A) \to (\_ \der A)$.
+  \end{itemize}
+\end{frame}
+
+\newcommand{\All}{\mathsf{All}}
+%\newcommand{\tlookup}{\mathsf{lookup}}
+\newcommand{\ttabulate}{\mathsf{tabulate}}
+\newcommand{\tselect}{\mathsf{select}}
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{$\List.\All$: true on every element}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item $\All\,P\,\vas$: Predicate $P$ holds on all elements of list $\vas$.
+\[
+  \nru{[\,]}{}{\All\,P\,[\,]}
+\qquad
+  \nru{(\_::\_)}{P\,a \qquad \All\,P\,\vas}{\All\,P\,(a :: \vas)}
+\]
+  \item Proofs of $\All\,P\,\vas$ are decorations of each list element
+    $a$ with further data of type $P\,a$.
+  \item Soundness is retrieval of this data, completeness tabulation:
+\[
+  \begin{array}{lcl}
+  \tlookup   & : & \All\,P\,\vas \to a \in \vas \to P\,a \\
+  \ttabulate & : & (\forall a.\ a \in \vas \to P\,a) \to \All\,P\,\vas \\
+  \end{array}
+\]
+  \item Universal truth is passed down to sublists:
+\[
+  \begin{array}{lcl}
+    \tselect & : & \vas \sublist \vbs \to \All\,P\,\vbs \to \All\,P\,\vas
+  \end{array}
+\]
+  \end{itemize}
+\end{frame}
+
+%\newcommand{\tsubst}{\mathsf{subst}}
+%\newcommand{\Subst}{\mathsf{Subst}}
+%\newcommand{\tcomp}{\mathsf{comp}}
+\newcommand{\tsg}{\mathsf{sg}}
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Substitution}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Inhabitants of $\All\,(\Gamma \der \_)\,\Delta$ are
+    \begin{itemize}
+    \item proofs that all formulas in $\Delta$ are derivable from
+      hypotheses $\Gamma$
+    \item substitutions from $\Delta$ to $\Gamma$
+    \end{itemize}
+  \item Parallel substitution
+\[
+  \begin{array}{lcl}
+    \tsubst & : & \All\,(\Gamma \der \_)\,\Delta \to \Delta \der A \to
+                  \Gamma \der A
+  \end{array}
+\]
+    replaces hypotheses $A \in \Delta$ by derivations of $\Gamma \der A$.
+  \item $\Subst\,\Gamma\,\Delta := \All\,(\Gamma \der \_)\,\Delta$ is
+    a category:
+\[
+  \begin{array}{lcl}
+    \tid   & : & \Subst\,\Gamma\,\Gamma \\
+    \tcomp & : & \Subst\,\Gamma\,\Delta \to \Subst\,\Delta\,\Phi \to
+                 \Subst\,\Gamma\,\Phi \\
+  \end{array}
+\]
+  \item Singleton substitution
+\[
+  \begin{array}{lcl}
+\tsg & : & \Gamma \der A \to \Subst\,\Gamma\,(A :: \Gamma)
+  \end{array}
+\]
+  \end{itemize}
+\end{frame}
+
+\newcommand{\tne}{\mathsf{ne}}
+%\newcommand{\Ne}{\mathsf{Ne}}
+%\newcommand{\Nf}{\mathsf{Nf}}
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Term equality and normal forms}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item For $t,t' : (\Gamma \der A)$ define $\beta\eta$-equality
+    $t \beeq t'$ as the least congruence over
+  \begin{multline*}
+  \nru{\beta
+     }{t : (A :: \Gamma \der B) \qquad u : \Gamma \der A
+     }{\tapp\,(\tabs\,t)\,u \beeq \tsubst\,(\tsg\,u)\,t}
+\\[1ex]
+  \nru{\eta
+     }{t : (\Gamma \der A \To B)
+     }{t \beeq \tabs\,(\tapp\,(\tweak\,\tsgw\,t)\,(\tvar\,\tzero))}
+  \end{multline*}
+  \item $\beta\eta$-normality $\Nf t$ and neutrality $\Ne t$
+   (where $o$ base formula):
+    \begin{gather*}
+      \nru{\tvar}{x : A \in \Gamma}{\Ne{(\tvar\, x)}}
+\qquad
+      \nru{\tapp}{\Ne t \qquad \Nf u}{\Ne{(\tapp\,t\,u)}}
+\\[2ex]
+  \nrux{\tne}{\Ne t}{\Nf t}{t : (\Gamma \der o)}
+\qquad
+  \nru{\tabs}{\Nf t}{\Nf{(\tabs\,t)}}
+    \end{gather*}
+  \end{itemize}
+\end{frame}
+
+\renewcommand{\NF}{\mathsf{NF}}
+\renewcommand{\NE}{\mathsf{NE}}
+%\newcommand{\Set}{\mathsf{Set}}
+
+\newcommand{\tsound}{\mathsf{sound}}
+\newcommand{\tcomplete}{\mathsf{complete}}
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Normalization}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Having a normal/neutral form:
+\[
+  \begin{array}{lcl}
+\NF\,t & = & \exists t' \beeq t.\ \Nf {t'} \\
+\NE\,t & = & \exists t' \beeq t.\ \Ne {t'} \\
+  \end{array}
+\]
+  \item Interpretation of formulas as types:
+\[
+  \begin{array}{lcl}
+    \Den A \Gamma & : & \Gamma \der A \to \Type \\
+    \Den o \Gamma t & = & \NE\,t \\
+    \Den{A \To B}\Gamma t & = &
+      \forall \Delta \
+        (w : \Gamma \sublist \Delta)
+        (u : \Delta \der A)
+     \\ && \to \Den A \Delta u
+     \\ && \to \Den B \Delta (\tapp\,(\tweak\,w\,t)\,u)
+  \end{array}
+\]
+  \item Soundness and completeness (combine to normalization):
+\[
+  \begin{array}{lcl}
+    \tsound & : & (t : \Gamma \der A) (\sigma : \Subst\,\Delta\,\Gamma)
+       \to \Den \Gamma \Delta \sigma \to \Den A \Delta (\tsubst\,\sigma\,t)
+    \\
+    \tcomplete & : & \Den A \Gamma t \to \NF\, t \\
+  \end{array}
+\]
+  \end{itemize}
+\end{frame}
+
+\section{Formal languages and Parsing}
+
+\newcommand{\Ge}{\varepsilon}
+\newcommand{\tred}{\mathsf{red}}
+\renewcommand{\ttm}{\mathsf{tm}}
+\newcommand{\tnt}{\mathsf{nt}}
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Formal languages}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item A context-free grammar (CFG) be given by
+    \begin{itemize}
+    \item terminals $a,b,c,\dots$ (words $u,v,w,\dots$)
+    \item non-terminals $X,Y,Z,\dots$
+    \item sentential forms $\alpha,\beta$, e.g. $XabY$
+    \item rules $r$ given by a type family $\_ ::= \_$.  We write
+  $r : (X ::= \alpha)$ if $X \to \alpha$ is a rule of the CFG.
+    \end{itemize}
+  \item Word membership $w \in \alpha$:
+    \begin{gather*}
+  \nru{\tred}{X ::= \alpha \qquad w \in \alpha}{w \in X}
+%  \nrux{\tred}{w \in \alpha}{w \in X}{r : X ::= \alpha}
+\\
+  \nru{\Ge}{}{\Ge \in \Ge}
+\qquad
+  \nru{\ttm}{w \in \beta}{aw \in a\beta}
+\qquad
+  \nru{\tnt}{u \in X \qquad v \in \beta}{uv \in X\beta}
+    \end{gather*}
+  \item Proofs of $w \in \alpha$ are parse trees.
+  \end{itemize}
+\end{frame}
+
+\newcommand{\tinit}{\mathsf{init}}
+\newcommand{\tpredict}{\mathsf{predict}}
+\newcommand{\tscan}{\mathsf{scan}}
+\newcommand{\tcombine}{\mathsf{combine}}
+\newcommand{\expto}{\leadsto}
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Earley parser}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Judgement $u.X\expto{}v.\beta$
+    \begin{gather*}
+\nru{\tinit}{}{\Ge.S\expto{}\Ge.S}
+\qquad
+\nru{\tpredict}{u.X \expto{} v.Y\beta \qquad Y ::= \alpha}{uv.Y \expto{} \Ge.\alpha}
+\\
+\nru{\tscan}{u.X \expto{} v.a\beta}{u.X \expto{} va.\beta}
+\qquad
+\nru{\tcombine}{u.X \expto{} v.Y\beta \qquad uv.Y \expto{} w.\Ge}{u.X \expto{} vw.\beta}
+    \end{gather*}
+  \item To parse $w \in S$ derive $\Ge.S \expto{} w.\Ge$.
+  \item Soundness:  If $u.X \expto{} v.\beta$ and $w \in \beta$
+    then $vw \in X$.
+  \item Completeness: If $u.X \expto{} v.\alpha\beta$ and $w \in \alpha$
+    then $u.X \expto{} vw.\beta$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{Conclusion}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item Many CHI design patterns to discover!
+  \item Current trend: revisit parsing theory from a type-theoretic
+    perspective.
+  \item Edwin Brady: bootstrapping Blodwen in Idris.
+  \item Large project: bootstrap Agda.
+  \end{itemize}
+\end{frame}
+
+
+% \begin{frame}%[fragile=singleslide]
+%   \frametitle{Future work}
+%   %\vspace{-3ex}
+%   \begin{itemize}
+%   \item
+%   \end{itemize}
+% \end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END DOC %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \bibliography{short}
+
+\end{document}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}%[fragile=singleslide]
+  \frametitle{}
+  \vspace{-3ex}
+  \begin{itemize}
+  \item
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
+
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

@@ -1,0 +1,7 @@
+Beweis-relevante Prädikate und Evidenz-verwaltende Programmierung
+
+Wir betrachten einige Beispiele für Prädikate und Relationen, deren Herleitungen (Beweis) interessante Informationen enthalten.  Z.B. ist der Beweis der Mitgliedschaft eines Elementes in einer Liste ein Zeiger auf dessen Position;  der Beweis der Mitgliedschaft eines Wortes in einer formalen Sprache ist ein Parse-Baum.
+
+Wir stellen uns weiterhin die Frage, wie wir Programme und Datentypen strukturieren können, so dass Evidenz für berechnete Eigenschaften für künfigte Berechnungen verfügbar bleibt.  Z.B. wissen wir nach erfolgreicher Typprüfung eines Ausdrucks, dass der Ausdruck wohlgetypt ist, d.h. bestimmte Formen nicht annehmen kann.  Diese Information kann spätere Berechnungsschritte erleichtern, z.B. die Auswertung des Ausdrucks.  Das Behalten und Verwalten berechneter Evidenz nennen wir "Evidenz-verwaltende Programmierung".
+
+Falls Zeit ist, werde ich eine grössere Fallstudie vorstellen: die Implementierung eines Fragmentes der Sprache C.

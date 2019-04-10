@@ -20,7 +20,7 @@ Type  T, U
 
 
 Type Context Γ
-  := List of terms variables with types
+  := List of term variables with types
 
 
 Term  t, u, v
@@ -42,7 +42,7 @@ Term  t, u, v
 
 ### Δ ⊢ i size
 
-x ∈ Δ
+x<i ∈ Δ
 ----------
 Δ ⊢ x size
 
@@ -66,7 +66,6 @@ x ∈ Δ
 --------------
 Δ ⊢ T ⇒ U type
 
-Δ ⊢ x size
 Δ ⊢ i size
 Δ,x<i ⊢ T type
 -----------------
@@ -76,17 +75,22 @@ x ∈ Δ
 ### Δ ⊢ i ≤ j
 
 ---------
-Δ ⊢ i ≤ ∞
-
----------
 Δ ⊢ i ≤ i
 
 Δ ⊢ i ≤ j
 -------------
 Δ ⊢ ↑ i ≤ ↑ j
 
+Δ ⊢ i < j
+-----------
+Δ ⊢ ↑ i ≤ j
+
 
 ### Δ ⊢ i < j
+
+x<i ∈ Δ
+---------
+Δ ⊢ x < i
 
 --------- (TODO: what if i = ∞?)
 Δ ⊢ i < ∞

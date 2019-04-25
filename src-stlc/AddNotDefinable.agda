@@ -22,8 +22,8 @@ pred-< : ∀ {m n} → m < n → pred m < n
 pred-< {zero}  p = p
 pred-< {suc m} p = m+n≤o⇒n≤o 1 p
 
--- We consider STLC with a base type "bool" that is inhabited by
--- two constants "true" and "false".
+-- We consider STLC with a base type "nat" with constants
+-- "zero", "suc" and "case".
 
 data Base : Set where
   nat : Base

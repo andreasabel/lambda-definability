@@ -97,6 +97,8 @@ x    w[ weak τ ]ᵛ = vs (x w[ τ ]ᵛ)
 vz   w[ lift τ ]ᵛ = vz
 vs x w[ lift τ ]ᵛ = vs (x w[ τ ]ᵛ)
 
+wkVar = _w[_]ᵛ
+
 _w[_]ᵉ : ∀{Γ Δ T} (t : Tm Γ T) (τ : Δ ≤ Γ) → Tm Δ T
 con c    w[ τ ]ᵉ = con c
 var x    w[ τ ]ᵉ = var (x w[ τ ]ᵛ)
@@ -139,7 +141,7 @@ wk-eval (pair u t) τ rewrite wk-eval u τ | wk-eval t τ = refl
 wk-eval (fst t)    τ rewrite wk-eval t τ = refl
 wk-eval (snd t)    τ rewrite wk-eval t τ = refl
 
-{-# REWRITE wk-eval #-}
+{-# REWRITE wk-evalv wk-eval #-}
 
 -- A syntactic logical relation:
 -- f is in the logical relation if it is the image of a t under evaluation.

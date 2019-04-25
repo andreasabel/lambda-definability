@@ -22,6 +22,9 @@ data Ty : Set where
   base : (b : Base) → Ty
   _⇒_ _×̂_ : (U T : Ty) → Ty
 
+infixr 4 _⇒_
+infixr 6 _×̂_
+
 -- Typing contexts
 
 data Cxt : Set where

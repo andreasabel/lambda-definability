@@ -16,7 +16,7 @@ open import Level                                 public using (Level; _⊔_; Li
 
 open import Data.Empty                            public using (⊥; ⊥-elim)
 open import Data.Unit                             public using (⊤)
-open import Data.Product                          public using (Σ; ∃; _×_; _,_; proj₁; proj₂; curry; <_,_>)
+open import Data.Product                          public using (Σ; ∃; _×_; _,_; proj₁; proj₂; curry; uncurry; <_,_>)
 open import Data.Sum                              public using (_⊎_; inj₁; inj₂; [_,_])
 
 open import Data.Nat.Base                         public using (ℕ; zero; suc; _+_)
@@ -30,7 +30,9 @@ open import Function                              public using (id; _∘_; _∘�
 open import Relation.Nullary                      public using (Dec; yes; no)
 open import Relation.Nullary.Decidable            public using (True)
 open import Relation.Binary                       public using (Decidable)
-open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; cong₂; cong-app; sym; trans; Extensionality; module ≡-Reasoning)
+open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; cong₂; cong-app; sym; trans; module ≡-Reasoning)
+
+open import Axiom.Extensionality.Propositional    public using (Extensionality)
 
 {-# BUILTIN REWRITE _≡_ #-}
 

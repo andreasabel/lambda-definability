@@ -1,15 +1,15 @@
 -- Simply-typed lambda definability and normalization by evaluation
 -- formalized in Agda
 --
--- Author: Andreas Abel, April 2019
+-- Author: Andreas Abel, 25 April 2019
 
 -- 4c. Using Kripke predicates to refute STLC-definability of addition.
 
 {-# OPTIONS --postfix-projections #-}
 {-# OPTIONS --rewriting #-}
 
-open import Data.Nat.Base using (ℕ; zero; suc; pred; _+_; _<_; s≤s; z≤n)
-open import Data.Nat.Properties using (suc-injective; ≤-stepsˡ; ≤-stepsʳ)
+open import Data.Nat.Base as ℕ using (ℕ; zero; suc; pred; _+_; _<_; s≤s; z≤n)
+open import Data.Nat.Properties using (suc-injective; ≤-trans; n≮n; m≤m+n; n≤m+n; ≤-stepsˡ; ≤-stepsʳ; m+n≤o⇒n≤o; +-monoˡ-≤; ≤⇒pred≤; ≰⇒≮; i+1+j≰i)
 
 open import Library
 
@@ -17,6 +17,10 @@ import SimpleTypes
 import STLCDefinable
 
 module AddNotDefinable where
+
+pred-< : ∀ {m n} → m < n → pred m < n
+pred-< {zero}  p = p
+pred-< {suc m} p = m+n≤o⇒n≤o 1 p
 
 -- We consider STLC with a base type "bool" that is inhabited by
 -- two constants "true" and "false".
@@ -55,6 +59,114 @@ c⦅ case t ⦆ (suc n , z , s) = s n
 -- by constructing a countermodel.
 
 open STLCDefinable Base B⦅_⦆ Const ty c⦅_⦆
+
+-- The model is functions bounded by constant plus possible
+-- the value of one variable.
+
+data BoundedBy Γ γ n k : Set where
+  bconst : (p : n < k)                            → BoundedBy Γ γ n k
+  bvar   : (x : Var tnat Γ) (p : n < k + V⦅ x ⦆ γ) → BoundedBy Γ γ n k
+
+record Bounded Γ (f : Fun Γ tnat) : Set where
+  constructor bounded
+  field
+    k : ℕ
+    h : ∀ γ → BoundedBy Γ γ (f γ) k
+
+-- Addition is not bounded!
+
+add : Fun ((ε ▷ tnat) ▷ tnat) tnat
+add ((_ , m) , n) = m + n
+
+addNotBounded : ¬ Bounded _ add
+addNotBounded (bounded k h) =
+  case h ((_ , suc k) , suc k) of λ where
+    (bconst       p) → i+1+j≰i _ (m+n≤o⇒n≤o 2 p) -- p : suc (k + suc k) < k
+    (bvar vz      p) → ≰⇒≮ (n≮n _) p             -- p : suc (k + suc k) < k + suc k
+    (bvar (vs vz) p) → ≰⇒≮ (n≮n _) p             -- p : suc (k + suc k) < k + suc k
+
+-- BoundedBy is monotone.
+
+BoundedBy-≤ : ∀{Γ γ n k l} → k ℕ.≤ l → BoundedBy Γ γ n k → BoundedBy Γ γ n l
+BoundedBy-≤ p (bconst b) = bconst (≤-trans b p)
+BoundedBy-≤ p (bvar x b) = bvar x (≤-trans b (+-monoˡ-≤ _ p))
+
+-- Weakening boundedness.
+
+wkBounded : ∀ {Γ Δ} {f : C⦅ Γ ⦆ → ℕ} →
+            Bounded Γ f → (τ : Δ ≤ Γ) → Bounded Δ (f ∘ R⦅ τ ⦆)
+wkBounded (bounded k h) τ = bounded k λ γ →
+  case h (R⦅ τ ⦆ γ) of λ where
+    (bconst p) → bconst p
+    (bvar x p) → bvar (wkVar x τ) p
+
+-- Kripke model
+
+NN-Base : STLC-KLP-Base
+NN-Base .STLCDefinable.STLC-KLP-Base.B⟦_⟧  nat Γ f = Bounded Γ f
+NN-Base .STLCDefinable.STLC-KLP-Base.monB nat τ b = wkBounded b τ
+
+open STLC-KLP-Ext NN-Base
+
+-- zero and suc are bounded.
+
+zeroBounded : ∀{Γ} → Bounded Γ (λ _ → zero)
+zeroBounded = bounded 1 λ γ → bconst (s≤s z≤n)
+
+sucBounded : ∀{Γ f} → Bounded Γ f → Bounded Γ (suc ∘ f)
+sucBounded (bounded k h) = bounded (suc k) λ γ →
+  case h γ of λ where
+    (bconst p) → bconst (s≤s p)
+    (bvar x p) → bvar x (s≤s p)
+
+⟦pred⟧ : ∀{Γ f} → Bounded Γ f → Bounded Γ (pred ∘ f)
+⟦pred⟧ (bounded k h) = bounded k λ γ →
+   case h γ of λ where
+     (bconst (s≤s p)) → bconst (s≤s (≤⇒pred≤ p))
+     (bvar x p) → bvar x (pred-< p)  -- m < n → pred m < n
+
+caseSat' : ∀ {Γ} c  {n : Fun Γ tnat} {z : Fun Γ c} {s : Fun Γ (tnat ⇒ c)} →
+      (⟦n⟧ : T⟦ tnat     ⟧ Γ n) →
+      (⟦z⟧ : T⟦ c        ⟧ Γ z) →
+      (⟦s⟧ : T⟦ tnat ⇒ c ⟧ Γ s) →
+      -- T⟦ c        ⟧ Γ (λ γ → caseN (n γ) (z γ) (s γ))
+      T⟦ c        ⟧ Γ (c⦅ case c ⦆ ∘ λ γ → (n γ , z γ , s γ))
+caseSat' tnat {n} {z} {s} ⟦n⟧ (bounded kz hz) ⟦s⟧ with ⟦s⟧ id≤ (⟦pred⟧ ⟦n⟧)
+... | bounded ks hs = bounded (kz + ks) λ γ → aux γ (n γ) (hz γ) (hs γ)
+  where
+  aux : ∀ γ m
+      → BoundedBy _ γ (z γ) kz
+      → BoundedBy _ γ (s γ (pred m)) ks
+      → BoundedBy _ γ (c⦅ case tnat ⦆ (m , z γ , s γ)) (kz + ks)
+  aux γ zero    hz hs = BoundedBy-≤ (m≤m+n _ _) hz
+  aux γ (suc m) hz hs = BoundedBy-≤ (n≤m+n _ _) hs
+caseSat' (a ⇒ b) ⟦n⟧ ⟦z⟧ ⟦s⟧ τ ⟦d⟧ = {! caseSat' b {! monT _ τ ⟦n⟧ !} {!!} {!!} !}  -- need c⦅ case (a ⇒ b) ⦆ to reduce!
+caseSat' (a ×̂ b) ⟦n⟧ ⟦z⟧ ⟦s⟧ = {!!} , {!!}
+
+caseSat : ∀ {Γ} c {nzs : Fun Γ (tnat ×̂ c ×̂ (tnat ⇒ c))} →
+      Bounded Γ (proj₁ ∘ nzs) ×
+      T⟦ c ⟧ Γ (proj₁ ∘ proj₂ ∘ nzs) ×
+      T⟦ tnat ⇒ c ⟧ Γ (proj₂ ∘ proj₂ ∘ nzs) →
+      T⟦ c ⟧ Γ (c⦅ case c ⦆ ∘ nzs)
+caseSat c (⟦n⟧ , ⟦z⟧ , ⟦s⟧) = caseSat' c ⟦n⟧ ⟦z⟧ ⟦s⟧
+
+
+-- Constants satisfy this model
+
+NN : STLC-KLP
+NN .STLCDefinable.STLC-KLP.klp-base = NN-Base
+NN .STLCDefinable.STLC-KLP.satC zero = zeroBounded
+NN .STLCDefinable.STLC-KLP.satC suc τ = sucBounded
+NN .STLCDefinable.STLC-KLP.satC (case a) τ = caseSat a
+
+-- Theorem: addition is not definable with zero, suc, case.
+
+thm : ¬ STLC-definable _ _ add
+thm def = addNotBounded (def NN)
+
+-- Q.E.D.
+
+{-
 
 -- The model is functions bounded by constant plus possible
 -- the value of one variable.
@@ -274,53 +386,6 @@ NN .STLCDefinable.STLC-KLP.satC zero =
 NN .STLCDefinable.STLC-KLP.satC suc τ (repr (body t) refl) =
   repr (body (sucTr t)) {!!}
 NN .STLCDefinable.STLC-KLP.satC (case a) τ ⟦d⟧ τ₁ ⟦d⟧₁ τ₂ ⟦d⟧₂ = {!!}
-
-{-
-
--- We define the predicate to be "constant or a projection".
---
--- To be a projection is to be the image of a variable under evaluation.
--- This seems to be the most economic definition.
--- A direct definition by induction on the context would look very similar.
-
-data IsConstantOrProjection Γ T (f : Fun Γ T) : Set where
-  isConstant   : (eq : ∀ γ γ' → f γ ≡ f γ')      → IsConstantOrProjection Γ T f
-  isProjection : (x : Var T Γ) (eq : f ≡ V⦅ x ⦆) → IsConstantOrProjection Γ T f
-
--- Negation is neither constant nor a projection from the singleton context (x:nat).
-
-not′ : Fun (ε ▷ base nat) (base nat)
-not′ = not ∘′ proj₂
-
-notNotConstantOrProjection : IsConstantOrProjection (ε ▷ base nat) (base nat) not′ → ⊥
-notNotConstantOrProjection (isConstant eq)      = case eq (_ , true) (_ , false) of λ()
-notNotConstantOrProjection (isProjection vz eq) = case cong (λ z → z (_ , true)) eq of λ()
-notNotConstantOrProjection (isProjection (STLCDefinable.vs ()) eq)
-
--- "Being constant or a projection" is a valid Kripke logical predicate at base type.
--- This amounts to show monotonicity, i.e., closure under composition with projections τ.
-
-NN-Base : STLC-KLP-Base
-NN-Base .STLCDefinable.STLC-KLP-Base.B⟦_⟧ nat Γ f = IsConstantOrProjection Γ _ f
-NN-Base .STLCDefinable.STLC-KLP-Base.monB nat τ (isConstant eq) =
-  isConstant (λ γ γ' → eq (R⦅ τ ⦆ γ) (R⦅ τ ⦆ γ'))
-NN-Base .STLCDefinable.STLC-KLP-Base.monB nat τ (isProjection x refl) =
-  isProjection (x w[ τ ]ᵛ) (sym (wk-evalv x τ))
-
--- The constants true/false satisfy this KLP.
--- (Because they denote constant functions.)
-
-NN : STLC-KLP
-NN .STLCDefinable.STLC-KLP.klp-base = NN-Base
-NN .STLCDefinable.STLC-KLP.satC true  = isConstant (λ _ _ → refl)
-NN .STLCDefinable.STLC-KLP.satC false = isConstant (λ _ _ → refl)
-
--- Since negation is not modelled by this predicate, it cannot be STLC-definable.
-
-thm : STLC-definable (ε ▷ base nat) (base nat) not′ → ⊥
-thm def = notNotConstantOrProjection (def NN)
-
--- Q.E.D.
 
 
 -- -}

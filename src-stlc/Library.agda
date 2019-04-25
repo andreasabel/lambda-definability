@@ -27,7 +27,7 @@ open import Data.Vec                              public using (Vec; []; _∷_; 
 
 open import Function                              public using (id; _∘_; _∘′_; case_of_)
 
-open import Relation.Nullary                      public using (Dec; yes; no)
+open import Relation.Nullary                      public using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable            public using (True)
 open import Relation.Binary                       public using (Decidable)
 open import Relation.Binary.PropositionalEquality public using (_≡_; refl; subst; cong; cong₂; cong-app; sym; trans; module ≡-Reasoning)

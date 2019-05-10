@@ -5,10 +5,10 @@ open import Relation.Binary using
 open import Relation.Binary.PropositionalEquality as ≡ using (_≡_ ; refl; module ≡-Reasoning)
 
 
-infix  0 _≈SS_
+infix  0 _⊇_ -- _≈SS_
 infixl 1 _∷_ _∷[_]_
-infixr 2 Π_,_
-infixr 3 _⇒_
+-- infixr 2 Π_,_
+-- infixr 3 _⇒_
 infixr 5 _∙_
 
 
@@ -19,7 +19,7 @@ mutual
     _∷_ : (Δ : SC) (i : Si Δ) → SC
 
 
-  -- Size variables are indexes into a size context.
+  -- Size variables are indexes into a size context with a given bound.
   data SV : (Δ : SC) → Set where
     zero : ∀ {Δ i} → SV (Δ ∷ i)
     suc : ∀ {Δ i} (α : SV Δ) → SV (Δ ∷ i)
@@ -39,165 +39,99 @@ variable
 
 
 mutual
-  infix 0 _⊇_
+  -- Renamings.
   data _⊇_ : (Δ Δ′ : SC) → Set where
     []   : [] ⊇ []
-    weak : (i : Si Δ) (τ : Δ ⊇ Δ′) → Δ ∷ i ⊇ Δ′
-    lift : (i′ : Si Δ′) (τ : Δ ⊇ Δ′) (p : renSi τ i′ ≡ i) → Δ ∷ i ⊇ Δ′ ∷ i′
+    weak : (θ : Δ ⊇ Δ′) → Δ ∷ i ⊇ Δ′
+    lift : (θ : Δ ⊇ Δ′) (p : renSi θ j ≡ i) → Δ ∷ i ⊇ Δ′ ∷ j
 
-  renSi : (τ : Δ ⊇ Δ′) → Si Δ′ → Si Δ
-  renSi τ (var α) = var (renSV τ α)
-  renSi τ (suc i) = suc (renSi τ i)
-  renSi τ ∞       = ∞
+
+  renSi : (θ : Δ ⊇ Δ′) → Si Δ′ → Si Δ
+  renSi θ (var α) = var (renSV θ α)
+  renSi θ (suc i) = suc (renSi θ i)
+  renSi θ ∞       = ∞
+
 
   renSV : Δ ⊇ Δ′ → SV Δ′ → SV Δ
-  renSV (weak i τ)  α       = suc (renSV τ α)
-  renSV (lift i′ τ p) zero    = zero
-  renSV (lift i′ τ p) (suc α) = suc (renSV τ α)
+  renSV (weak θ)  α       = suc (renSV θ α)
+  renSV (lift θ p) zero    = zero
+  renSV (lift θ p) (suc α) = suc (renSV θ α)
+
 
 variable
-  τ τ′ : Δ′ ⊇ Δ
+  θ ι : Δ′ ⊇ Δ
 
-cong-lift : ∀ p p′ → τ ≡ τ′ → lift {_} {_} {j} i τ p ≡ lift i τ′ p′
-cong-lift refl refl refl = refl
 
-mutual
-  idR : ∀ Δ → Δ ⊇ Δ
-  idR []      = []
-  idR (Δ ∷ i) = lift i (idR Δ) (renSi-id i)
+cong-lift : ∀ {p q} → θ ≡ ι → lift {j = j} {i} θ p ≡ lift ι q
+cong-lift {p = refl} {refl} refl = refl
 
-  renSi-id : ∀ i → renSi (idR Δ) i ≡ i
-  renSi-id (var α) = ≡.cong var (renSV-id α)
-  renSi-id (suc i) = ≡.cong suc (renSi-id i)
-  renSi-id ∞       = refl
-
-  renSV-id : ∀ (α : SV Δ) → renSV (idR Δ) α ≡ α
-  renSV-id zero    = refl
-  renSV-id (suc α) = ≡.cong suc (renSV-id α)
-
--- lift-id-refl : lift i (idR Δ) refl ≡ ≡.subst (λ j → Δ ∷ j ⊇ Δ ∷ i) (≡.sym (renSi-id i)) (idR (Δ ∷ i)) -- idR (Δ ∷ renSi (idR Δ) i)
--- lift-id-refl {i = i} = {!!}
-
--- lift-id : (p : renSi (idR Δ) i ≡ j) →
---           lift i (idR Δ) p ≡ ≡.subst (λ j → Δ ∷ j ⊇ Δ ∷ i) (≡.trans (≡.sym (renSi-id i)) p) (idR (Δ ∷ i)) -- idR (Δ ∷ renSi (idR Δ) i)
--- lift-id refl = {!!}
 
 mutual
-  ren-ren : Δ ⊇ Δ′ → Δ′ ⊇ Δ″ →  Δ ⊇ Δ″
-  ren-ren [] τ′ = τ′
-  ren-ren (weak i τ) τ′ = weak i (ren-ren τ τ′)
-  ren-ren (lift i τ p) (weak .i τ′) = weak _ (ren-ren τ τ′)
-  ren-ren (lift i τ p) (lift i′ τ′ p′) = lift _ (ren-ren τ τ′) (≡.trans (≡.trans (ren-renSi _) (≡.cong (renSi τ) p′)) p)
-  -- ren-ren (lift i τ p) (lift i′ τ′ refl) = lift _ (ren-ren τ τ′) (≡.trans (ren-renSi _) p)
-  -- ren-ren (lift i τ refl) (lift i′ τ′ refl) = lift _ (ren-ren τ τ′) (ren-renSi _)
+  idR : Δ ⊇ Δ
+  idR {[]}    = []
+  idR {Δ ∷ i} = lift idR renSi-id
 
-  ren-renSi : ∀ i → renSi (ren-ren τ τ′) i ≡ renSi τ (renSi τ′ i)
-  ren-renSi (var α) = ≡.cong var (ren-renSV _ _ α)
-  ren-renSi (suc i) = ≡.cong suc (ren-renSi i)
-  ren-renSi ∞ = refl
+  renSi-id : {i : Si Δ} → renSi idR i ≡ i
+  renSi-id {i = var α} = ≡.cong var renSV-id
+  renSi-id {i = suc i} = ≡.cong suc renSi-id
+  renSi-id {i = ∞}     = refl
 
-  ren-renSV : ∀ (τ : Δ ⊇ Δ′) (τ′ : Δ′ ⊇ Δ″) α → renSV (ren-ren τ τ′) α ≡ renSV τ (renSV τ′ α)
-  ren-renSV _ [] ()
-  ren-renSV (weak i τ) τ′ α = ≡.cong suc (ren-renSV τ τ′ α)
-  ren-renSV (lift i′ τ refl) (weak .i′ τ′) α = ≡.cong suc (ren-renSV τ τ′ α)
-  ren-renSV (lift i′ τ refl) (lift i′₁ τ′ refl) zero = refl
-  ren-renSV (lift i′ τ refl) (lift i′₁ τ′ refl) (suc α) = ≡.cong suc (ren-renSV τ τ′ α)
-
-ren-id-l : ∀ Δ {τ : Δ ⊇ Δ′} → ren-ren (idR Δ) τ ≡ τ
-ren-id-l [] = refl
-ren-id-l (Δ ∷ i) {weak .i τ}   = ≡.cong (weak i) (ren-id-l Δ)
-ren-id-l (Δ ∷ i) {lift i′ τ p} = cong-lift _ _ (ren-id-l Δ)
-
-ren-id-r : ∀ (τ : Δ′ ⊇ Δ) → ren-ren τ (idR Δ) ≡ τ
-ren-id-r []            = refl
-ren-id-r (weak i τ)    = ≡.cong (weak i) (ren-id-r _)
-ren-id-r (lift i′ τ p) = cong-lift _ _ (ren-id-r _)
-
-lift-weak-id : (p : renSi τ i ≡ j) → ren-ren (lift i τ p) (weak i (idR Δ))  ≡ weak j τ
-lift-weak-id refl = ≡.cong (weak _) (ren-id-r _)
-
-ren-ren-weak-id : ren-ren (weak i (idR Δ)) τ  ≡ weak i τ
-ren-ren-weak-id = ≡.cong (weak _) (ren-id-l _)
-
-{-
-mutual
-  infix 0 _⊇_
-  data _⊇_ : (Δ Δ′ : SC) → Set where
-    []   : [] ⊇ []
-    weak : (i  : Si Δ ) (τ : Δ ⊇ Δ′) → Δ ∷ i ⊇ Δ′
-    lift : (i′ : Si Δ′) (τ : Δ ⊇ Δ′) (let i = renSi τ i′) → Δ ∷ i ⊇ Δ′ ∷ i′
-
-  renSi : (τ : Δ ⊇ Δ′) → Si Δ′ → Si Δ
-  renSi τ (var α) = var (renSV τ α)
-  renSi τ (suc i) = suc (renSi τ i)
-  renSi τ ∞       = ∞
-
-  renSV : Δ ⊇ Δ′ → SV Δ′ → SV Δ
-  renSV (weak i τ)  α       = suc (renSV τ α)
-  renSV (lift i′ τ) zero    = zero
-  renSV (lift i′ τ) (suc α) = suc (renSV τ α)
+  renSV-id : {α : SV Δ} → renSV idR α ≡ α
+  renSV-id {α = zero}  = refl
+  renSV-id {α = suc α} = ≡.cong suc renSV-id
 
 mutual
-  idR : ∀ Δ → Δ ⊇ Δ
-  idR []      = []
-  idR (Δ ∷ i) = ≡.subst (λ z → Δ ∷ z ⊇ Δ ∷ i)(renSi-id Δ i) (lift i (idR Δ))
+  _∙_ : Δ ⊇ Δ′ → Δ′ ⊇ Δ″ →  Δ ⊇ Δ″
+  [] ∙ ι = ι
+  weak θ ∙ ι = weak (θ ∙ ι)
+  lift θ p ∙ weak ι = weak (θ ∙ ι)
+  lift θ p ∙ lift ι q
+    = lift (θ ∙ ι) (≡.trans (≡.trans renSi-∙ (≡.cong (renSi θ) q)) p)
 
-  renSi-id : ∀ Δ i → renSi (idR Δ) i ≡ i
-  renSi-id Δ (var α) = ≡.cong var (renSV-id Δ α)
-  renSi-id Δ (suc i) = ≡.cong suc (renSi-id Δ i)
-  renSi-id Δ ∞       = refl
+  renSi-∙ : renSi (θ ∙ ι) i ≡ renSi θ (renSi ι i)
+  renSi-∙ {i = var α} = ≡.cong var renSV-∙
+  renSi-∙ {i = suc i} = ≡.cong suc renSi-∙
+  renSi-∙ {i = ∞} = refl
 
-  renSV-id : ∀ Δ (α : SV Δ) → renSV (idR Δ) α ≡ α
-  renSV-id (Δ ∷ i) zero    = {!!} -- rewrite renSi-id Δ i = {!!}
-  renSV-id (Δ ∷ i) (suc α) = {!aux (idR Δ) (renSi (idR Δ) i) (renSi-id Δ i)!}
-    where
-    aux : ∀ {Δ} {i : Si Δ} {α : SV Δ} (τ : Δ ⊇ Δ) (w₁ : Si Δ)
-        (w₂ : w₁ ≡ renSi τ i) →
-      renSV (≡.subst (λ z → Δ ∷ z ⊇ Δ ∷ i) w₂ (lift i τ)) (suc α) ≡ suc α
-    aux _ _ _ = ?
-{-
-    aux : ∀ {Δ} {i : Si Δ} {α : SV Δ} (w : Si Δ) (w₁ : w ≡ i) →
-      renSV (≡.subst (λ z → Δ ∷ z ⊇ Δ ∷ i) w₁ (lift i (idR Δ))) (suc α) ≡
-      suc α
-    aux {Δ} .(idR Δ) refl = ?
-{-
-    aux : ∀ {Δ} w (w₁ : Δ ⊇ Δ) (i : Si Δ) (w₂ : w w₁ i ≡ i)
-        {α : SV Δ} →
-      renSV (≡.subst (λ z → Δ ∷ z ⊇ Δ ∷ i) w₂ (lift i w₁)) (suc α) ≡
-      suc α
-    aux w τ i refl = ?
-{-
-    aux : ∀ {Δ} {i : Si Δ} (w : renSi (idR Δ) i ≡ i) {α : SV Δ} →
-      renSV (≡.subst (λ z → Δ ∷ z ⊇ Δ ∷ i) w (lift i (idR Δ))) (suc α) ≡
-      suc α
-    aux refl = ?
-    -- aux : ∀ {Δ} {i : Si Δ} {α : SV Δ} →
-    --   renSV
-    --   (≡.subst (λ z → Δ ∷ z ⊇ Δ ∷ i) (lift i (idR Δ)))
-    --   (suc α)
-    --   ≡ suc α
--}
--}
--}
--}
+  renSV-∙ : renSV (θ ∙ ι) α ≡ renSV θ (renSV ι α)
+  renSV-∙ {θ = []} {ι = []} {()}
+  renSV-∙ {θ = weak θ} = ≡.cong suc renSV-∙
+  renSV-∙ {θ = lift θ refl} {ι = weak ι} = ≡.cong suc renSV-∙
+  renSV-∙ {θ = lift θ refl} {ι = lift ι refl} {zero} = refl
+  renSV-∙ {θ = lift θ refl} {ι = lift ι refl} {suc α} = ≡.cong suc renSV-∙
+
+
+∙-id-l : idR ∙ θ ≡ θ
+∙-id-l {θ = []} = refl
+∙-id-l {θ = weak θ} = ≡.cong weak ∙-id-l
+∙-id-l {θ = lift θ p} = cong-lift ∙-id-l
+
+
+∙-id-r : θ ∙ idR ≡ θ
+∙-id-r {θ = []} = refl
+∙-id-r {θ = weak θ} = ≡.cong weak ∙-id-r
+∙-id-r {θ = lift θ p} = cong-lift ∙-id-r
+
+
+weak′ : Δ ∷ i ⊇ Δ
+weak′ = weak idR
+
+
+lift∙weak′ : {θ : Δ ⊇ Δ′} {p : renSi θ i ≡ j} → lift θ p ∙ weak′ ≡ weak θ
+lift∙weak′ = ≡.cong weak ∙-id-r
+
+
+weak′∙ : {θ : Δ ⊇ Δ′} → weak′ {i = i} ∙ θ ≡ weak θ
+weak′∙ = ≡.cong weak ∙-id-l
+
 
 wkSV : SV Δ → SV (Δ ∷ i)
-wkSV = renSV (weak _ (idR _))
+wkSV = renSV weak′
 
-{-
-wkSV : SV Δ → SV (Δ ∷ i)
-wkSV zero = suc zero
-wkSV (suc α) = suc (wkSV α)
--}
 
 wkSi : Si Δ → Si (Δ ∷ i)
-wkSi = renSi (weak _ (idR _))
-{-
-wkSi : Si Δ → Si (Δ ∷ i)
-wkSi (var α) = var (wkSV α)
-wkSi (suc i) = suc (wkSi i)
-wkSi ∞ = ∞
--}
+wkSi = renSi weak′
+
 
 bound : (α : SV Δ) → Si Δ
 bound (zero {i = i}) = wkSi i
@@ -208,30 +142,31 @@ bound-wkSV : (α : SV Δ) → bound (wkSV {i = i} α) ≡ wkSi (bound α)
 bound-wkSV zero = refl
 bound-wkSV (suc α) = ≡.cong wkSi (bound-wkSV α)
 
-ren-bound : ∀ (τ : Δ′ ⊇ Δ) α → renSi τ (bound α) ≡ bound (renSV τ α)
-ren-bound (weak i τ)    α = begin
-  renSi (weak i τ) (bound α)                    ≡⟨ ≡.cong (λ z → renSi z (bound α)) (≡.sym ren-ren-weak-id) ⟩
-  renSi (ren-ren (weak _ (idR _)) τ) (bound α)  ≡⟨ ren-renSi (bound α) ⟩
-  wkSi (renSi τ (bound α))                      ≡⟨ ≡.cong wkSi (ren-bound τ α) ⟩
-  wkSi (bound (renSV τ α))
-  ∎ where open ≡-Reasoning
-ren-bound (lift i′ τ p) α = {!!}
 
-ren-bound (weak i τ) (zero {i = j}) = begin
-  renSi (weak i τ) (wkSi j)                    ≡⟨ ≡.cong (λ z → renSi (weak i z) (wkSi j)) (≡.sym (ren-id-l _)) ⟩
-  renSi (ren-ren (weak i (idR _)) τ) (wkSi _)  ≡⟨ ren-renSi _ ⟩
-  wkSi (renSi τ (wkSi _))                      ≡⟨ ≡.cong wkSi (ren-bound τ zero) ⟩
-  wkSi (bound (renSV τ zero))
-  ∎ where open ≡-Reasoning
-
-ren-bound (lift i′ τ refl) zero = begin
-  renSi (lift i′ τ refl) (renSi (weak i′ (idR _)) i′)   ≡⟨  ≡.sym (ren-renSi i′) ⟩
-  renSi (ren-ren (lift i′ τ refl) (weak i′ (idR _))) i′ ≡⟨  ≡.cong (λ z → renSi (weak (renSi τ i′) z) i′) (≡.trans (ren-id-r _) (≡.sym (ren-id-l _))) ⟩
-  renSi (ren-ren (weak (renSi τ i′) (idR _)) τ) i′      ≡⟨  ren-renSi i′ ⟩
-  renSi (weak (renSi τ i′) (idR _)) (renSi τ i′)
-  ∎ where open ≡-Reasoning
-ren-bound (weak i τ) (suc α) = {!!}
-ren-bound (lift i′ τ p) (suc α) = {!!}
+renSi-bound : renSi θ (bound α) ≡ bound (renSV θ α)
+renSi-bound {θ = weak θ} {α} =
+  let open ≡-Reasoning in
+  begin
+    renSi (weak θ) (bound α)
+  ≡⟨ ≡.cong (λ z → renSi z (bound α)) (≡.sym weak′∙) ⟩
+    renSi (weak idR ∙ θ) (bound α)
+  ≡⟨ renSi-∙ ⟩
+    wkSi (renSi θ (bound α))
+  ≡⟨ ≡.cong wkSi renSi-bound ⟩
+    wkSi (bound (renSV θ α))
+  ∎
+renSi-bound {θ = lift {j = j} {i} θ refl} {α} =
+  let open ≡-Reasoning in
+  {!!}
+  -- begin
+  --   renSi (lift θ refl) (renSi (weak idR) j)
+  -- ≡⟨ ≡.sym renSi-∙ ⟩
+  --   renSi (lift θ refl ∙ weak idR) j
+  -- ≡⟨ ≡.cong (λ z → renSi (weak z) j) (≡.trans ∙-id-r (≡.sym ∙-id-l)) ⟩
+  --   renSi (weak idR ∙ θ) j
+  -- ≡⟨ renSi-∙ ⟩
+  --   renSi (weak idR) (renSi θ j)
+  -- ∎
 
 module _ {Δ : SC} where
   -- TODO better naming in this module
@@ -351,17 +286,18 @@ mutual
   wkSi-resp-< (suc-cong i<j) = suc-cong (wkSi-resp-< i<j)
   wkSi-resp-< ∞ = ∞
 
-mutual
-  ren-≤ : (τ : Δ′ ⊇ Δ) → i ≤ j → renSi τ i ≤ renSi τ j
-  ren-≤ τ refl = refl
-  ren-≤ τ (<→≤ i<j) = <→≤ (ren-< τ i<j)
 
-  ren-< : (τ : Δ′ ⊇ Δ) → i < j → renSi τ i < renSi τ j
-  ren-< τ (var {zero} x) = var {!ren-< τ x!}
-  ren-< τ (var {suc α} x) = var {!!}
-  ren-< τ (suc i≤j) = suc (ren-≤ τ i≤j)
-  ren-< τ (suc-cong i<j) = suc-cong (ren-< τ i<j)
-  ren-< τ ∞ = ∞
+mutual
+  renSi-resp-≤ : (θ : Δ′ ⊇ Δ) → i ≤ j → renSi θ i ≤ renSi θ j
+  renSi-resp-≤ θ refl = refl
+  renSi-resp-≤ θ (<→≤ i<j) = <→≤ (renSi-resp-< θ i<j)
+
+  renSi-resp-< : (θ : Δ′ ⊇ Δ) → i < j → renSi θ i < renSi θ j
+  renSi-resp-< θ (var {zero} x) = var {!ren-< θ x!}
+  renSi-resp-< θ (var {suc α} x) = var {!!}
+  renSi-resp-< θ (suc i≤j) = suc (renSi-resp-≤ θ i≤j)
+  renSi-resp-< θ (suc-cong i<j) = suc-cong (renSi-resp-< θ i<j)
+  renSi-resp-< θ ∞ = ∞
 
 
 mutual
@@ -374,33 +310,41 @@ mutual
       → (i : Si Δ) {j : Si Δ′} (i<j : i < subSi σ j)
       → SS Δ (Δ′ ∷ j)
 
+
   subSV : (σ : SS Δ′ Δ) (α : SV Δ) → Si Δ′
   subSV (σ ∷[ i ] i<j) zero    = i
   subSV (σ ∷[ i ] i<j) (suc α) = subSV σ α
+
 
   subSi : (σ : SS Δ′ Δ) (i : Si Δ) → Si Δ′
   subSi σ (var α) = subSV σ α
   subSi σ (suc i) = suc (subSi σ i)
   subSi σ ∞ = ∞
 
+
 variable
-  σ σ′ : SS Δ Δ′
+  σ τ : SS Δ Δ′
+
 
 mutual
   renSS : Δ′ ⊇ Δ → SS Δ Ω → SS Δ′ Ω
-  renSS τ [] = []
-  renSS τ (σ ∷[ i ] i<j) = renSS τ σ ∷[ renSi τ i ] {!!}
+  renSS θ [] = []
+  renSS θ (σ ∷[ i ] i<j) = renSS θ σ ∷[ renSi θ i ] {!!}
 
-  subSi-renSS : subSi (renSS τ σ) j ≡ renSi τ (subSi σ j)
+
+  subSi-renSS : subSi (renSS θ σ) j ≡ renSi θ (subSi σ j)
   subSi-renSS = {!!}
 
-  subSV-renSS : subSV (renSS τ σ) α ≡ renSi τ (subSV σ α)
+
+  subSV-renSS : subSV (renSS θ σ) α ≡ renSi θ (subSV σ α)
   subSV-renSS = {!!}
 
-subFromRen : Δ ⊇ Δ′ → SS Δ Δ′
-subFromRen [] = []
-subFromRen (weak i τ) = {!subFromRen τ!}
-subFromRen (lift i′ τ p) = {!!}
+
+⊇→SS : Δ ⊇ Δ′ → SS Δ Δ′
+⊇→SS [] = []
+⊇→SS (weak θ) = {!subFromRen θ!}
+⊇→SS (lift θ p) = {!!}
+
 
 idS : ∀ Δ → SS Δ Δ
 idS [] = []
@@ -430,10 +374,10 @@ data _≈SS_ : (σ δ : SS Δ Δ′) → Set where
     → id ∙ σ ≈SS σ
   id-r : {σ : SS Δ Δ′}
     → σ ∙ id ≈SS σ
-  _∙_ : {σ σ′ : SS Δ′ Δ″} {δ δ′ : SS Δ Δ′}
-    → σ ≈SS σ′
+  _∙_ : {σ τ : SS Δ′ Δ″} {δ δ′ : SS Δ Δ′}
+    → σ ≈SS τ
     → δ ≈SS δ′
-    → σ ∙ δ ≈SS σ′ ∙ δ′
+    → σ ∙ δ ≈SS τ ∙ δ′
   _∷_ : ∀ {σ δ : SS Δ Δ′} {i j} {i<j : i < j}
     → σ ≈SS δ
     → σ ∷[ i ] i<j ≈SS δ ∷[ i ] i<j

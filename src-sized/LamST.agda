@@ -5,7 +5,7 @@ open import Relation.Nullary using (¬_)
 open import Relation.Binary using
   (Reflexive ; Sym ; Symmetric ; Trans ; Transitive)
 open import Relation.Binary.PropositionalEquality as ≡ using (_≡_ ; refl; module ≡-Reasoning)
-
+open import Induction.WellFounded using (Acc; acc; WellFounded)
 
 infix  0 _⊇_ _<_ _≤_
 infixl 1 _∷_ _∷[_]_
@@ -38,13 +38,15 @@ mutual
     si : (i : Si Δ) → Si∞ Δ
     ∞ : Si∞ Δ
 
-
 variable
   Δ Δ′ Δ″ : SC
   i j k : Si Δ
   n m o : Si∞ Δ
   α β : SV Δ
 
+
+si-injective : si i ≡ si j → i ≡ j
+si-injective refl = refl
 
 suc∞ : Si∞ Δ → Si∞ Δ
 suc∞ (si i) = si (suc i)
@@ -172,6 +174,18 @@ wkSi∞ : Si∞ Δ → Si∞ (Δ ∷ n)
 wkSi∞ = renSi∞ weak′
 
 
+data BoundH : (α : SV Δ) → (i : Si Δ′) → (θ :  Δ ⊇ Δ′) → Set where
+  zero : BoundH {Δ = Δ ∷ si i} zero i (weak idR)
+  suc  : BoundH α i θ → BoundH (suc {n = m} α) i (weak θ)
+
+data Bound : (α : SV Δ) → (i : Si Δ) → Set where
+  zero : wkSi i ≡ j → Bound {Δ = Δ ∷ si i} zero j
+  suc  : wkSi i ≡ j → Bound α i → Bound (suc {n = m} α) j
+
+data Bound∞ : (α : SV Δ) → (n : Si∞ Δ) → Set where
+  zero : Bound∞ {Δ = Δ ∷ n} zero (wkSi∞ n)
+  suc  : Bound∞ α n → Bound∞ (suc {n = m} α) (wkSi∞ n)
+
 bound : (α : SV Δ) → Si∞ Δ
 bound (zero {n = n}) = wkSi∞ n
 bound (suc α) = wkSi∞ (bound α)
@@ -234,7 +248,7 @@ mutual
   -- A strict order on sizes.
   data _<_ {Δ} : (i j : Si Δ) → Set where
     var
-      : bound α ≡ si i
+      : Bound α i -- bound α ≡ si i
       → i ≤ j
       → var α < j
     ≤→<S
@@ -262,7 +276,107 @@ data _<∞_ {Δ} : (i : Si Δ) (n : Si∞ Δ) → Set where
   ∞
     : i <∞ ∞
 
+data _<V_ : (α β : SV Δ) → Set where
+  zero : zero {n = n} <V suc β
+  suc  : (α<β : α <V β) → suc {n = n} α <V suc β
 
+acc-<V-zero : Acc _<V_ (zero {n = n})
+acc-<V-zero = acc λ _ ()
+
+acc-<V-suc : Acc _<V_ α → Acc _<V_ (suc {n = n} α)
+acc-<V-suc (acc h) = acc λ where
+  _ zero    → acc-<V-zero
+  _ (suc p) → acc-<V-suc (h _ p)
+
+wf-<V : WellFounded (_<V_ {Δ = Δ})
+wf-<V β = acc λ where
+  .zero zero → acc λ _ ()
+  .(suc α) (suc {α = α} α<β) → acc-<V-suc (wf-<V α)
+
+wk-var-<V : wkSi (var α) ≡ var β → suc α <V β
+wk-var-<V {α = α} = {!!}
+
+wk-not-var-zero : wkSi {n = n} i ≡ var zero → ⊥
+wk-not-var-zero {i = var zero} ()
+wk-not-var-zero {i = var (suc α)} ()
+wk-not-var-zero {i = suc i} ()
+
+wk-not-<-var-zero : wkSi {n = n} i < var zero → ⊥
+wk-not-<-var-zero {i = var α} (var (suc x x₁) refl) = wk-not-var-zero x
+wk-not-<-var-zero {i = var α} (var (suc refl x₂) (<→≤ x₁)) = wk-not-<-var-zero x₁
+
+not-<-var-zero : i < var zero → ⊥
+not-<-var-zero (var {zero} (zero x) refl)          = ⊥-elim (wk-not-var-zero x)
+not-<-var-zero (var {zero} (zero refl) (<→≤ x))    = ⊥-elim (wk-not-<-var-zero x)
+not-<-var-zero (var {suc α} (suc x x₁) refl)       = ⊥-elim (wk-not-var-zero x)
+not-<-var-zero (var {suc α} (suc refl x₂) (<→≤ x)) = ⊥-elim (wk-not-<-var-zero x)
+
+{-
+WRONG!!
+not-<-var-suc : (∀{α i} → α <V β → i < var α → ⊥) → j < var β → ⊥
+not-<-var-suc ih (var (zero {i = var α} x) refl) = {! ih (wk-var-<V x) {!!} !}
+not-<-var-suc ih (var (suc x x₁) refl) = {!!}
+not-<-var-suc ih (var x (<→≤ x₁)) = {!!}
+
+not-<-var : i < var α → ⊥
+not-<-var {α = zero} h = not-<-var-zero h
+not-<-var {α = suc .zero} (var (zero {i = var zero} refl) refl) = {!!}
+not-<-var {α = suc .(suc (renSV idR α₁))} (var (zero {i = var (suc α₁)} refl) refl) = {!!}
+not-<-var {α = suc α} (var (suc x x₁) refl) = {!!}
+not-<-var {α = suc α} (var (zero x) (<→≤ x₁)) = {!!}
+not-<-var {α = suc α} (var (suc x x₂) (<→≤ x₁)) = {!!}
+-}
+
+-- Lemma: j < var β → ∃ λ α → j ≡ var α × α <V β
+
+
+mutual
+  acc-var-rec : (∀{α} → α <V β → Acc _<_ (var α)) → Acc _<_ (var {Δ = Δ} β)
+  acc-var-rec {β = β} = {!!}
+
+  acc-var : Acc _<_ (var {Δ = Δ} β)
+  acc-var {β = zero} = acc λ where
+    .(var zero) (var {zero} (zero x) refl) → ⊥-elim (wk-not-var-zero x)
+    .(var zero) (var {zero} (zero refl) (<→≤ x)) → ⊥-elim (wk-not-<-var-zero x)
+    .(var (suc α)) (var {suc α} (suc x x₁) refl) → ⊥-elim (wk-not-var-zero x)
+    .(var (suc α)) (var {suc α} (suc refl x₂) (<→≤ x)) → ⊥-elim (wk-not-<-var-zero x)
+  acc-var {β = suc β} = {!!}
+  acc-var {Δ ∷ n} = acc λ where
+    _ (var (zero {Δ = Δ'} x) p) → {!!}
+    _ (var (suc x x₁) p) → {!!}
+    _ (var (zero x) refl) → {!!}
+    _ (var (suc x x₁) refl) → {!!}
+
+
+  acc-<-suc : Acc _<_ k → Acc _<_ (suc k)
+  acc-<-suc (acc h) = acc λ where
+    .(var α) (var {α} x refl) → {!!}
+    .(var α) (var {α} x (<→≤ x₁)) → {!!}
+    .(var α) (var {α} x x₁) → {!x!}
+    j (≤→<S refl)      → acc h
+    j (≤→<S (<→≤ j<k)) → h _ j<k
+    _ (suc-cong j<k)   → acc-<-suc (h _ j<k)
+
+  acc-dest-≤ : i ≤ j → Acc _<_ j → Acc _<_ i
+  acc-dest-≤ refl h            = h
+  acc-dest-≤ (<→≤ i<j) (acc h) = h _ i<j
+
+  acc-dest-<-suc : j < k → Acc _<_ k → Acc _<_ (suc j)
+  acc-dest-<-suc x = acc-dest-≤ {!!}
+
+  <-wf : WellFounded (_<_ {Δ = Δ})
+  <-wf i = acc λ j j<i → aux j<i
+  <-wf i = acc λ where
+    _ (var α<j j≤i) → {!!}
+    j (≤→<S x) → {!!}
+    (suc k) (suc-cong k<j) → {!!} -- acc-<-suc (<-wf k)
+
+  aux : i < j → Acc _<_ i
+  aux  (var α<j j≤i) = {!!}
+  aux  (≤→<S i≤j) = acc-dest-≤ i≤j (<-wf _)
+  aux {i = suc j} (suc-cong {j = k} j<k) = acc-dest-<-suc j<k (<-wf k)  -- (<-wf k) -- acc-<-suc (<-wf j) --
+
+{-
 mutual
   <→<S : i < j → i < suc j
   <→<S x = ≤→<S (<→≤ x)
@@ -375,7 +489,7 @@ mutual
   <∞→≤∞→≤ : i <∞ n → n ≤∞ si j → i ≤ j
   <∞→≤∞→≤ (si x) (si x₁) = <→≤→≤ x x₁
 
-
+{-
 mutual
   renSi-resp-≤ : (θ : Δ′ ⊇ Δ) → i ≤ j → renSi θ i ≤ renSi θ j
   renSi-resp-≤ θ refl = refl
@@ -491,14 +605,10 @@ weakS′ = weakS idS
 
 
 mutual
-  subSi∞-resp-≤ : (σ : SS Δ Δ′) → n ≤∞ m → subSi∞ σ n ≤∞ subSi∞ σ m
-  subSi∞-resp-≤ σ (si i≤j) = si (subSi-resp-≤ σ i≤j)
-  subSi∞-resp-≤ σ ∞ = ≤∞-refl
 
-
-  subSi∞-resp-< : (σ : SS Δ Δ′) → i <∞ n → subSi σ i <∞ subSi∞ σ n
-  subSi∞-resp-< σ (si i<j) = si (subSi-resp-< σ i<j)
-  subSi∞-resp-< σ ∞ = ∞
+  subSi-resp-<-var : (σ : SS Δ Δ′) → bound α ≡ si i → subSV σ α ≤ subSi σ i
+  subSi-resp-<-var {α = zero {n = si i₁}} (σ ∷[ i ] i<n) p rewrite ≡.sym (si-injective p) = {!!}
+  subSi-resp-<-var {α = suc α} (σ ∷[ i ] i<n) p = {!!}
 
 
   subSi-resp-≤ : (σ : SS Δ Δ′) → i ≤ j → subSi σ i ≤ subSi σ j
@@ -529,9 +639,18 @@ mutual
 
 
   subSV-resp-< : (σ : SS Δ Δ′) → var α < i → subSV σ α < subSi σ i
-  subSV-resp-< {α = zero} (σ ∷[ i ] i<n) (var x x₁) = ?
-  subSV-resp-< {α = suc α} (σ ∷[ i ] i<n) (var x x₁) = ?
+  subSV-resp-< {α = zero} (σ ∷[ i ] i<n) (var x x₁) = {!!}
+  subSV-resp-< {α = suc α} (σ ∷[ i ] i<n) (var x x₁) = {!!}
   subSV-resp-< σ (≤→<S x) = {!!}
+
+subSi∞-resp-≤ : (σ : SS Δ Δ′) → n ≤∞ m → subSi∞ σ n ≤∞ subSi∞ σ m
+subSi∞-resp-≤ σ (si i≤j) = si (subSi-resp-≤ σ i≤j)
+subSi∞-resp-≤ σ ∞ = ≤∞-refl
+
+
+subSi∞-resp-< : (σ : SS Δ Δ′) → i <∞ n → subSi σ i <∞ subSi∞ σ n
+subSi∞-resp-< σ (si i<j) = si (subSi-resp-< σ i<j)
+subSi∞-resp-< σ ∞ = ∞
 
 
 mutual
@@ -680,4 +799,10 @@ data Tm : (Δ : SC) (Γ : TC Δ) (T : Ty Δ) → Set where
 
 -- one : ∀ {Δ Γ} → Tm Δ Γ (ℕ ∞)
 -- one = cast {!!} {!!} ((cast {!refl!} {!sub-∷!} (suc ·ₛ ∞)) ·ₛ {!!}) · {!!}
--}
+-- -}
+-- -}
+-- -}
+-- -}
+-- -}
+-- -}
+-- -}

@@ -6,7 +6,7 @@ open import Data.Product using
 open import Induction.WellFounded using (Acc; acc; WellFounded)
 open import Relation.Nullary using (¬_)
 open import Relation.Binary.PropositionalEquality as ≡ using
-  (_≡_ ; refl; module ≡-Reasoning)
+  (_≡_ ; _≢_ ; refl; module ≡-Reasoning)
 
 
 infix  4 _⊇_ _<_ _≤_
@@ -240,15 +240,20 @@ wkSi∞≡si⁻ : wkSi∞ n ≡ si i → ∃[ j ] (n ≡ si j × i ≡ wkSi j)
 wkSi∞≡si⁻ {n = si i} refl = i , refl , refl
 
 
+wkSi∞-suc∞ : wkSi∞ {n = n} (suc∞ m) ≡ suc∞ (wkSi∞ m)
+wkSi∞-suc∞ {m = si i} = refl
+wkSi∞-suc∞ {m = ∞} = refl
+
+
 wkSi≢varzero : wkSi {n = n} i ≡ var zero → ⊥
 wkSi≢varzero {i = var zero} ()
 wkSi≢varzero {i = var (suc α)} ()
 wkSi≢varzero {i = suc i} ()
 
 
-wkSi≡suc-inv : wkSi {n = n} i ≡ var (suc β) → i ≡ var β
-wkSi≡suc-inv {i = var zero} refl = refl
-wkSi≡suc-inv {i = var (suc α)} refl = refl
+wkSi≡suc⁻ : wkSi {n = n} i ≡ var (suc β) → i ≡ var β
+wkSi≡suc⁻ {i = var zero} refl = refl
+wkSi≡suc⁻ {i = var (suc α)} refl = refl
 
 
 wkSi-inj : wkSi {n = n} i ≡ wkSi j → i ≡ j
@@ -317,8 +322,8 @@ Bound≡bound (zero refl refl) = refl
 Bound≡bound (suc refl x₁) rewrite ≡.sym (Bound≡bound x₁) = refl
 
 
-Bound-suc-inv : Bound (suc {n = n} α) (wkSi i) → Bound α i
-Bound-suc-inv (suc x x₁) rewrite wkSi-inj x = x₁
+Bound-suc⁻ : Bound (suc {n = n} α) (wkSi i) → Bound α i
+Bound-suc⁻ (suc x x₁) rewrite wkSi-inj x = x₁
 
 
 bound-renSV : bound (renSV θ α) ≡ renSi∞ θ (bound α)
@@ -426,7 +431,7 @@ data _≤∞_ {Δ} : (n m : Si∞ Δ) → Set where
     : i ≤ j
     → si i ≤∞ si j
   ∞
-    : ∞ ≤∞ ∞
+    : n ≤∞ ∞
 
 
 -- The extension of < to sizes with ∞.
@@ -445,6 +450,15 @@ data _<∞_ {Δ} : (n m : Si∞ Δ) → Set where
 ≤∞-reflexive : n ≡ m → n ≤∞ m
 ≤∞-reflexive {n = si i} refl = si refl
 ≤∞-reflexive {n = ∞} refl = ∞
+
+
+≤∞-refl : n ≤∞ n
+≤∞-refl = ≤∞-reflexive refl
+
+
+<∞→≤∞ : n <∞ m → n ≤∞ m
+<∞→≤∞ (si i<j) = si (<→≤ i<j)
+<∞→≤∞ ∞ = ∞
 
 
 mutual
@@ -513,7 +527,8 @@ mutual
 
   ≤∞-trans : n ≤∞ m → m ≤∞ o → n ≤∞ o
   ≤∞-trans (si x) (si x₁) = si (≤-trans x x₁)
-  ≤∞-trans ∞ x₁ = x₁
+  ≤∞-trans (si x) ∞ = ∞
+  ≤∞-trans ∞ ∞ = ∞
 
 
   <→≤→≤ : i < j → j ≤ k → i ≤ k
@@ -529,13 +544,24 @@ mutual
   <∞-var x ∞ = ∞
 
 
-  ≤∞-refl : n ≤∞ n
-  ≤∞-refl {n = si i} = si refl
-  ≤∞-refl {n = ∞} = ∞
-
-
   <∞-var′ : Bound∞ α n → var∞ α <∞ n
   <∞-var′ x = <∞-var x ≤∞-refl
+
+
+suc∞-resp-< : n <∞ m → suc∞ n <∞ suc∞ m
+suc∞-resp-< (si x) = si (suc-cong x)
+suc∞-resp-< ∞ = ∞
+
+
+<∞→≤∞→<∞ : n <∞ m → m ≤∞ o → n <∞ o
+<∞→≤∞→<∞ (si x) (si x₁) = si (<→≤→< x x₁)
+<∞→≤∞→<∞ (si x) ∞ = ∞
+<∞→≤∞→<∞ ∞ ∞ = ∞
+
+
+≤∞→<∞S : n ≡ si i → n ≤∞ m → n <∞ suc∞ m
+≤∞→<∞S refl (si x) = si (≤→<S x)
+≤∞→<∞S refl ∞ = ∞
 
 
 wkSi≮varzero : wkSi {n = n} i < var zero → ⊥
@@ -575,7 +601,7 @@ Bound→<V : Bound α (var β) → α <V β
 Bound→<V {β = zero} (zero p x) = ⊥-elim (wkSi≢varzero x)
 Bound→<V {β = suc β} (zero p x) = zero
 Bound→<V {β = zero} (suc x x₁) = ⊥-elim (wkSi≢varzero x)
-Bound→<V {β = suc β} (suc x x₁) rewrite wkSi≡suc-inv x = suc (Bound→<V x₁)
+Bound→<V {β = suc β} (suc x x₁) rewrite wkSi≡suc⁻ x = suc (Bound→<V x₁)
 
 
 Bound<→<V : Bound α i → i < var β → α <V β
@@ -586,9 +612,9 @@ Bound<→<V {β = suc {n = n} β} (suc {i = i} refl x₂) x₁
   = suc (Bound<→<V x₂ (wkSi-inj-< x₁))
 
 
-<var-inv : i < var β → ∃[ α ] (i ≡ var α × α <V β)
-<var-inv {β = β} (var {α} x refl) = α , refl , Bound→<V x
-<var-inv (var {γ} x (<→≤ x₁)) = γ , refl , Bound<→<V x x₁
+<var⁻ : i < var β → ∃[ α ] (i ≡ var α × α <V β)
+<var⁻ {β = β} (var {α} x refl) = α , refl , Bound→<V x
+<var⁻ (var {γ} x (<→≤ x₁)) = γ , refl , Bound<→<V x x₁
 
 
 mutual
@@ -651,20 +677,25 @@ mutual
       : (σ : SS Δ Δ′)
       → (i : Si Δ) {n : Si∞ Δ′} (i<n : si i <∞ subSi∞ σ n)
       → SS Δ (Δ′ ∷ n)
+    _∷∞
+      : (σ : SS Δ Δ′)
+      → SS Δ (Δ′ ∷ ∞)
 
 
-  subSV : (σ : SS Δ Δ′) (α : SV Δ′) → Si Δ
-  subSV (σ ∷[ i ] i<j) zero    = i
+  subSV : (σ : SS Δ Δ′) (α : SV Δ′) → Si∞ Δ
+  subSV (σ ∷[ i ] i<j) zero    = si i
   subSV (σ ∷[ i ] i<j) (suc α) = subSV σ α
+  subSV (σ ∷∞) zero = ∞
+  subSV (σ ∷∞) (suc α) = suc∞ (subSV σ α)
 
 
-  subSi : (σ : SS Δ Δ′) (i : Si Δ′) → Si Δ
+  subSi : (σ : SS Δ Δ′) (i : Si Δ′) → Si∞ Δ
   subSi σ (var α) = subSV σ α
-  subSi σ (suc i) = suc (subSi σ i)
+  subSi σ (suc i) = suc∞ (subSi σ i)
 
 
   subSi∞ : (σ : SS Δ Δ′) (n : Si∞ Δ′) → Si∞ Δ
-  subSi∞ σ (si i) = si (subSi σ i)
+  subSi∞ σ (si i) = subSi σ i
   subSi∞ σ ∞ = ∞
 
 
@@ -672,8 +703,8 @@ variable
   σ τ : SS Δ Δ′
 
 
-subSi-[] : (i : Si []) → subSi [] i ≡ renSi [] i
-subSi-[] (suc i) = ≡.cong suc (subSi-[] i)
+-- subSi-[] : (i : Si []) → subSi [] i ≡ renSi [] i
+-- subSi-[] (suc i) = ≡.cong suc (subSi-[] i)
 
 
 mutual
@@ -682,24 +713,29 @@ mutual
   weakS (_∷[_]_ σ i {j} i<j)
     = weakS σ ∷[ wkSi i ]
       ≡.subst (si (wkSi i) <∞_) (≡.sym (subSi∞-weakS σ j)) (wkSi-resp-<∞ i<j)
+  weakS (σ ∷∞) = weakS σ ∷∞
 
 
   subSi∞-weakS : ∀ (σ : SS Δ Δ′) m
     → subSi∞ (weakS {n = n} σ) m ≡ wkSi∞ (subSi∞ σ m)
-  subSi∞-weakS σ (si i) = ≡.cong si (subSi-weakS σ i)
+  subSi∞-weakS σ (si i) = subSi-weakS σ i
   subSi∞-weakS σ ∞ = refl
 
 
   subSi-weakS : ∀ (σ : SS Δ Δ′) i
-    → subSi (weakS {n = n} σ) i ≡ wkSi (subSi σ i)
+    → subSi (weakS {n = n} σ) i ≡ wkSi∞ (subSi σ i)
   subSi-weakS σ (var α) = subSV-weakS σ α
-  subSi-weakS σ (suc i) = ≡.cong suc (subSi-weakS σ i)
+  subSi-weakS σ (suc i)
+    = ≡.sym (≡.trans wkSi∞-suc∞ (≡.cong suc∞ (≡.sym (subSi-weakS σ i))))
 
 
   subSV-weakS :  ∀ (σ : SS Δ Δ′) α
-    →  subSV (weakS {n = n} σ) α ≡ wkSi (subSV σ α)
+    →  subSV (weakS {n = n} σ) α ≡ wkSi∞ (subSV σ α)
   subSV-weakS (σ ∷[ i ] i<j) zero = refl
   subSV-weakS (σ ∷[ i ] i<j) (suc α) = subSV-weakS σ α
+  subSV-weakS (σ ∷∞) zero = refl
+  subSV-weakS (σ ∷∞) (suc α)
+    = ≡.sym (≡.trans wkSi∞-suc∞ (≡.cong suc∞ (≡.sym (subSV-weakS σ α))))
 
 
 mutual
@@ -714,16 +750,16 @@ mutual
 
 
   subSi∞-id : subSi∞ idS n ≡ n
-  subSi∞-id {n = si i} = ≡.cong si subSi-id
+  subSi∞-id {n = si i} = subSi-id
   subSi∞-id {n = ∞} = refl
 
 
-  subSi-id : subSi idS i ≡ i
+  subSi-id : subSi idS i ≡ si i
   subSi-id {i = var α} = subSV-id
-  subSi-id {i = suc i} = ≡.cong suc subSi-id
+  subSi-id {i = suc i} = ≡.cong suc∞ subSi-id -- ≡.cong suc subSi-id
 
 
-  subSV-id : subSV idS α ≡ var α
+  subSV-id : subSV idS α ≡ si (var α)
   subSV-id {α = zero} = refl
   subSV-id {α = suc {n = n} α}
     rewrite subSV-weakS {n = n} idS α
@@ -735,85 +771,123 @@ weakS′ : SS (Δ ∷ n) Δ
 weakS′ = weakS idS
 
 
-subSi-∷-wk : (σ : SS Δ Δ′) {i : Si Δ}  {i<n : si i <∞ subSi∞ σ n} (j : Si Δ′)
-  → subSi (σ ∷[ i ] i<n) (wkSi j) ≡ subSi σ j
+subSi-∷-wk : (σ : SS Δ Δ′) {i : Si Δ} {n : Si∞ Δ′} {i<n : si i <∞ subSi∞ σ n} (j : Si Δ′)
+  → subSi (_∷[_]_ σ i {n = n} i<n) (wkSi j) ≡ subSi σ j
 subSi-∷-wk σ (var α) = refl
-subSi-∷-wk σ (suc j) = ≡.cong suc (subSi-∷-wk σ j)
+subSi-∷-wk σ (suc j) = ≡.cong suc∞ (subSi-∷-wk σ j)
 
 
-mutual
-  subSi-resp-≤ : (σ : SS Δ Δ′) → i ≤ j → subSi σ i ≤ subSi σ j
-  subSi-resp-≤ σ refl = refl
-  subSi-resp-≤ σ (<→≤ i<j) = <→≤ (subSi-resp-< σ i<j)
+bound≢∞→subSV≡si : bound α ≢ ∞ → ∃[ j ] (subSV σ α ≡ si j)
+bound≢∞→subSV≡si {α = zero} {σ = σ ∷[ i ] i<n} contra = _ , refl
+bound≢∞→subSV≡si {α = suc α} {σ = σ ∷[ i ] i<n} contra
+  = bound≢∞→subSV≡si {α = α} {σ = σ} λ bα≡∞ → contra (≡.cong wkSi∞ bα≡∞)
+bound≢∞→subSV≡si {α = zero} {σ = σ ∷∞} contra = ⊥-elim (contra refl)
+bound≢∞→subSV≡si {α = suc α} {σ = σ ∷∞} contra
+  with bound≢∞→subSV≡si {α = α} {σ = σ} λ bα≡∞ → contra (≡.cong wkSi∞ bα≡∞)
+... | j , p = suc j , ≡.cong suc∞ p
 
 
-  subSi-resp-< : (σ : SS Δ Δ′) → i < j → subSi σ i < subSi σ j
-  subSi-resp-< {i = var α} {j} σ i<j = subSV-subSi-resp-< σ i<j
-  subSi-resp-< {i = suc i} {suc j} σ (≤→<S Si≤j) = suc-cong (subSi-resp-< σ (S≤→< Si≤j))
-  subSi-resp-< {i = suc i} {suc j} σ (suc-cong i<j) = suc-cong (subSi-resp-< σ i<j)
+-- Wrong?
+-- var<→subSV≡si : var α < i → ∃[ j ] (subSV σ α ≡ si j)
+-- var<→subSV≡si {σ = σ ∷[ k ] k<n} (var (zero refl x₂) x₁) = k , refl
+-- var<→subSV≡si {σ = σ ∷[ k ] k<n} (var (suc {i = i′} {α = α} x x₂) x₁)
+--   = var<→subSV≡si {α = α} {i′} {σ = σ} (var x₂ refl)
+-- var<→subSV≡si {σ = σ ∷∞} (var (suc x x₂) x₁) = {!!}
+-- var<→subSV≡si {i = suc i} {σ = σ ∷[ k ] k<n} (≤→<S x) = {!x!}
+-- var<→subSV≡si {σ = σ ∷∞} (≤→<S x) = {!!}
 
 
-  subSV-subSi-resp-≤ : (σ : SS Δ Δ′) → var α ≤ i → subSV σ α ≤ subSi σ i
-  subSV-subSi-resp-≤ σ refl = refl
-  subSV-subSi-resp-≤ σ (<→≤ α<i) = <→≤ (subSV-subSi-resp-< σ α<i)
+-- var≤→subSV≡si : var α ≤ i → ∃[ j ] (subSV σ α ≡ si j)
+-- var≤→subSV≡si refl = {!!}
+-- var≤→subSV≡si (<→≤ x) = {!!}
 
 
-  subSV-subSi-resp-< : (σ : SS Δ Δ′) → var α < i → subSV σ α < subSi σ i
-  subSV-subSi-resp-< {i = i} σ (var x x₁) = <→≤→< (subSi-resp-<-var σ x) (subSi-resp-≤ σ x₁)
-  subSV-subSi-resp-< {i = .(suc _)} σ (≤→<S x) = ≤→<S (subSV-subSi-resp-≤ σ x)
+-- mutual
+--   subSi-resp-≤ : (σ : SS Δ Δ′) → i ≤ j → subSi σ i ≤∞ subSi σ j
+--   subSi-resp-≤ σ refl = ≤∞-refl
+--   subSi-resp-≤ σ (<→≤ i<j) = <∞→≤∞ (subSi-resp-< σ i<j)
 
 
-  subSi-resp-<-var : (σ : SS Δ Δ′) → Bound α i → subSV σ α < subSi σ i
-  subSi-resp-<-var {α = zero} (σ ∷[ i ] si i<k) (zero {i = j}refl refl)
-    = ≡.subst (i <_) (≡.sym (subSi-∷-wk σ j)) i<k
-  subSi-resp-<-var {α = suc α} (σ ∷[ i ] i<n) (suc {i = j} refl p)
-    = ≡.subst (subSV σ α <_) (≡.sym (subSi-∷-wk σ j)) (subSi-resp-<-var σ p)
+--   subSi-resp-< : (σ : SS Δ Δ′) → i < j → subSi σ i <∞ subSi σ j
+--   subSi-resp-< σ p@(var x x₁) = subSV-resp-< σ p  -- subSV-resp-< σ i<j
+--   subSi-resp-< σ (≤→<S i≤j) = ≤∞→<∞S {!!} (subSi-resp-≤ σ i≤j) -- suc∞-resp-< (subSi-resp-< σ (S≤→< Si≤j))
+--   subSi-resp-< σ (suc-cong i<j) = {!!}-- suc∞-resp-< (subSi-resp-< σ i<j)
 
 
-subSi∞-resp-≤ : (σ : SS Δ Δ′) → n ≤∞ m → subSi∞ σ n ≤∞ subSi∞ σ m
-subSi∞-resp-≤ σ (si i≤j) = si (subSi-resp-≤ σ i≤j)
-subSi∞-resp-≤ σ ∞ = ≤∞-refl
+--   subSV-resp-≤ : (σ : SS Δ Δ′) → var α ≤ i → subSV σ α ≤∞ subSi σ i
+--   subSV-resp-≤ σ refl = ≤∞-refl
+--   subSV-resp-≤ σ (<→≤ α<i) = <∞→≤∞ (subSV-resp-< σ α<i)
 
 
-subSi∞-resp-< : (σ : SS Δ Δ′) → n <∞ m → subSi∞ σ n <∞ subSi∞ σ m
-subSi∞-resp-< σ (si i<j) = si (subSi-resp-< σ i<j)
-subSi∞-resp-< σ ∞ = ∞
+--   subSV-resp-< : (σ : SS Δ Δ′) → var α < i → subSV σ α <∞ subSi σ i
+--   subSV-resp-< σ (var x x₁) = <∞→≤∞→<∞ (subSi-resp-<-var σ x) (subSi-resp-≤ σ x₁)
+--   subSV-resp-< σ (≤→<S refl) = {!<∞S ?!}
+--   subSV-resp-< σ (≤→<S (<→≤ x)) = {!!} -- ≤∞→<∞S (subSV-subSi-resp-≤ σ x)
+
+
+--   subSi-resp-<-var : (σ : SS Δ Δ′) → Bound α i → subSV σ α <∞ subSi σ i
+--   subSi-resp-<-var = {!!}
+--   -- subSi-resp-<-var {α = zero} (σ ∷[ i ] si i<k) (zero {i = j}refl refl)
+--   --   = ≡.subst (i <_) (≡.sym (subSi-∷-wk σ j)) i<k
+--   -- subSi-resp-<-var {α = suc α} (σ ∷[ i ] i<n) (suc {i = j} refl p)
+--   --   = ≡.subst (subSV σ α <_) (≡.sym (subSi-∷-wk σ j)) (subSi-resp-<-var σ p)
+
+
+-- subSi∞-resp-≤ : (σ : SS Δ Δ′) → n ≤∞ m → subSi∞ σ n ≤∞ subSi∞ σ m
+-- subSi∞-resp-≤ σ (si i≤j) = {!!} -- si (subSi-resp-≤ σ i≤j)
+-- subSi∞-resp-≤ σ ∞ = {!!} -- ≤∞-refl
+
+
+-- subSi∞-resp-< : (σ : SS Δ Δ′) → n <∞ m → subSi∞ σ n <∞ subSi∞ σ m
+-- subSi∞-resp-< σ (si i<j) = {!!} -- si (subSi-resp-< σ i<j)
+-- subSi∞-resp-< σ ∞ = {!!} -- ∞
+
+
+subSi∞-suc∞ : ∀ (σ : SS Δ Δ′) n
+  → subSi∞ σ (suc∞ n) ≡ suc∞ (subSi∞ σ n)
+subSi∞-suc∞ σ (si i) = refl
+subSi∞-suc∞ σ ∞ = refl
 
 
 mutual
   _∙ₛ_ : (σ : SS Δ′ Δ″) (τ : SS Δ Δ′) → SS Δ Δ″
   [] ∙ₛ τ = []
   (_∷[_]_ σ i {n} i<n) ∙ₛ τ
-    = σ ∙ₛ τ ∷[ subSi τ i ]
-      ≡.subst (si (subSi τ i) <∞_) (≡.sym (subSi∞-∙ₛ σ τ n)) (subSi∞-resp-< τ i<n)
+    = σ ∙ₛ τ ∷[ ? ]
+      ?
+      -- ≡.subst (si (subSi τ i) <∞_) (≡.sym (subSi∞-∙ₛ σ τ n)) (subSi∞-resp-< τ i<n)
+  (σ ∷∞) ∙ₛ τ = (σ ∙ₛ τ) ∷∞
 
 
-  subSi∞-∙ₛ : ∀ (σ : SS Δ′ Δ″) (θ : SS Δ Δ′) n
-    → subSi∞ (σ ∙ₛ θ) n ≡ subSi∞ θ (subSi∞ σ n)
-  subSi∞-∙ₛ σ θ (si i) = ≡.cong si (subSi-∙ₛ σ θ i)
-  subSi∞-∙ₛ σ θ ∞ = refl
+  subSi∞-∙ₛ : ∀ (σ : SS Δ′ Δ″) (τ : SS Δ Δ′) n
+    → subSi∞ (σ ∙ₛ τ) n ≡ subSi∞ τ (subSi∞ σ n)
+  subSi∞-∙ₛ σ τ (si i) = subSi-∙ₛ σ τ i
+  subSi∞-∙ₛ σ τ ∞ = refl
 
 
-  subSi-∙ₛ : ∀ (σ : SS Δ′ Δ″) (θ : SS Δ Δ′) i
-    → subSi (σ ∙ₛ θ) i ≡ subSi θ (subSi σ i)
-  subSi-∙ₛ σ θ (var α) = subSV-∙ₛ σ θ α
-  subSi-∙ₛ σ θ (suc i) = ≡.cong suc (subSi-∙ₛ σ θ i)
+  subSi-∙ₛ : ∀ (σ : SS Δ′ Δ″) (τ : SS Δ Δ′) i
+    → subSi (σ ∙ₛ τ) i ≡ subSi∞ τ (subSi σ i)
+  subSi-∙ₛ σ τ (var α) = subSV-∙ₛ σ τ α
+  subSi-∙ₛ σ τ (suc i)
+    = ≡.sym (≡.trans (subSi∞-suc∞ τ (subSi σ i)) (≡.cong suc∞ (≡.sym (subSi-∙ₛ σ τ i))))
 
 
-  subSV-∙ₛ : ∀ (σ : SS Δ′ Δ″) (θ : SS Δ Δ′) α
-    → subSV (σ ∙ₛ θ) α ≡ subSi θ (subSV σ α)
-  subSV-∙ₛ (σ ∷[ i ] i<n) θ zero = refl
-  subSV-∙ₛ (σ ∷[ i ] i<n) θ (suc α) = subSV-∙ₛ σ θ α
+  subSV-∙ₛ : ∀ (σ : SS Δ′ Δ″) (τ : SS Δ Δ′) α
+    → subSV (σ ∙ₛ τ) α ≡ subSi∞ τ (subSV σ α)
+  subSV-∙ₛ σ τ α = {!!}
+  -- subSV-∙ₛ (σ ∷[ i ] i<n) τ zero = refl
+  -- subSV-∙ₛ (σ ∷[ i ] i<n) τ (suc α) = subSV-∙ₛ σ τ α
 
 
 liftS : (σ : SS Δ Δ′) → subSi∞ σ m ≡ n → SS (Δ ∷ n) (Δ′ ∷ m)
-liftS σ p
+liftS {m = m} σ p
   = weakS σ ∷[ var zero ]
-    <∞-var′ (zero (≡.sym (≡.trans (subSi∞-weakS σ _) (≡.cong wkSi∞ p))))
+    <∞-var′ (zero (≡.sym (≡.trans (subSi∞-weakS σ m) (≡.cong wkSi∞ p))))
 
 
 -- K ahoy!
-liftS-cong : {σ : SS Δ Δ′} {p q : subSi∞ σ m ≡ n} → liftS σ p ≡ liftS σ q
+liftS-cong : {σ : SS Δ Δ′} {p q : subSi∞ σ m ≡ n}
+  → liftS {m = m} σ p ≡ liftS σ q
 liftS-cong {p = refl} {refl} = refl
 
 
@@ -826,23 +900,23 @@ mutual
 
   subSi∞-⊇→SS : ∀ (θ : Δ ⊇ Δ′) n
     → subSi∞ (⊇→SS θ) n ≡ renSi∞ θ n
-  subSi∞-⊇→SS θ (si i) = ≡.cong si (subSi-⊇→SS θ i)
+  subSi∞-⊇→SS θ (si i) = {!!} -- ≡.cong si (subSi-⊇→SS θ i)
   subSi∞-⊇→SS θ ∞ = refl
 
 
   subSi-⊇→SS : ∀ (θ : Δ ⊇ Δ′) i
-    → subSi (⊇→SS θ) i ≡ renSi θ i
+    → subSi (⊇→SS θ) i ≡ si (renSi θ i)
   subSi-⊇→SS θ (var α) = subSV-⊇→SS θ α
-  subSi-⊇→SS θ (suc i) = ≡.cong suc (subSi-⊇→SS θ i)
+  subSi-⊇→SS θ (suc i) = {!!} -- ≡.cong suc (subSi-⊇→SS θ i)
 
 
   subSV-⊇→SS : ∀ (θ : Δ ⊇ Δ′) α
-    → subSV (⊇→SS θ) α ≡ var (renSV θ α)
+    → subSV (⊇→SS θ) α ≡ var∞ (renSV θ α)
   subSV-⊇→SS (weak θ) α
-    = ≡.trans (subSV-weakS (⊇→SS θ) α) (≡.cong wkSi (subSV-⊇→SS θ α))
+    = {!!} -- ≡.trans (subSV-weakS (⊇→SS θ) α) (≡.cong wkSi (subSV-⊇→SS θ α))
   subSV-⊇→SS (lift θ p) zero = refl
   subSV-⊇→SS (lift θ p) (suc α)
-    = ≡.trans (subSV-weakS (⊇→SS θ) α) (≡.cong wkSi (subSV-⊇→SS θ α))
+    = {!!} -- ≡.trans (subSV-weakS (⊇→SS θ) α) (≡.cong wkSi (subSV-⊇→SS θ α))
 
 
 subTy∞-⊇→SS-liftS : ∀ (θ : Δ ⊇ Δ′) {m m′} n
@@ -854,14 +928,14 @@ subTy∞-⊇→SS-liftS θ n p q
 
 subTy-⊇→SS-liftS : ∀ (θ : Δ ⊇ Δ′) {m m′} i
   → (p : subSi∞ (⊇→SS θ) m ≡ m′) (q : renSi∞ θ m ≡ m′)
-  → subSi (liftS (⊇→SS θ) p) i ≡ renSi (lift θ q) i
+  → subSi (liftS (⊇→SS θ) p) i ≡ si (renSi (lift θ q) i)
 subTy-⊇→SS-liftS θ i p q
   = ≡.trans (≡.cong (λ z → subSi z i) liftS-cong) (subSi-⊇→SS (lift θ q) i)
 
 
 subSV-⊇→SS-liftS : ∀ (θ : Δ ⊇ Δ′) {m m′} α
   → (p : subSi∞ (⊇→SS θ) m ≡ m′) (q : renSi∞ θ m ≡ m′)
-  → subSV (liftS (⊇→SS θ) p) α ≡ var (renSV (lift θ q) α)
+  → subSV (liftS (⊇→SS θ) p) α ≡ var∞ (renSV (lift θ q) α)
 subSV-⊇→SS-liftS θ α p q
   = ≡.trans (≡.cong (λ z → subSV z α) liftS-cong) (subSV-⊇→SS (lift θ q) α)
 
@@ -876,17 +950,24 @@ mutual
 
   subSi∞-ₛ∙ᵣ : ∀ (σ : SS Δ′ Δ″) (θ : Δ ⊇ Δ′) n
     → subSi∞ (σ ₛ∙ᵣ θ) n ≡ renSi∞ θ (subSi∞ σ n)
-  subSi∞-ₛ∙ᵣ σ θ (si i) = ≡.cong si (subSi-ₛ∙ᵣ σ θ i)
+  subSi∞-ₛ∙ᵣ σ θ (si i) = {!!} -- ≡.cong si (subSi-ₛ∙ᵣ σ θ i)
   subSi∞-ₛ∙ᵣ σ θ ∞ = refl
 
 
   subSi-ₛ∙ᵣ : ∀ (σ : SS Δ′ Δ″) (θ : Δ ⊇ Δ′) j
-    → subSi (σ ₛ∙ᵣ θ) j ≡ renSi θ (subSi σ j)
+    → subSi (σ ₛ∙ᵣ θ) j ≡ renSi∞ θ (subSi σ j)
   subSi-ₛ∙ᵣ σ θ (var α) = subSV-ₛ∙ᵣ σ θ α
-  subSi-ₛ∙ᵣ σ θ (suc j) = ≡.cong suc (subSi-ₛ∙ᵣ σ θ j)
+  subSi-ₛ∙ᵣ σ θ (suc j) = {!!} -- ≡.cong suc (subSi-ₛ∙ᵣ σ θ j)
 
 
   subSV-ₛ∙ᵣ : ∀ (σ : SS Δ′ Δ″) (θ : Δ ⊇ Δ′) α
-    → subSV (σ ₛ∙ᵣ θ) α ≡ renSi θ (subSV σ α)
+    → subSV (σ ₛ∙ᵣ θ) α ≡ renSi∞ θ (subSV σ α)
   subSV-ₛ∙ᵣ (σ ∷[ i ] i<j) θ zero = refl
   subSV-ₛ∙ᵣ (σ ∷[ i ] i<j) θ (suc α) = subSV-ₛ∙ᵣ σ θ α
+
+
+extendS : n <∞ m → SS Δ (Δ ∷ n)
+extendS = {!!}
+-- extendS {i = i} i<n = idS ∷[ i ] ≡.subst (i <∞_) (≡.sym subSi∞-id) i<n
+
+-- -}

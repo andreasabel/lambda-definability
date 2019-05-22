@@ -245,15 +245,10 @@ wkSi∞-suc∞ {m = si i} = refl
 wkSi∞-suc∞ {m = ∞} = refl
 
 
-wkSi≢varzero : wkSi {n = n} i ≡ var zero → ⊥
+wkSi≢varzero : wkSi {n = n} i ≢ var zero
 wkSi≢varzero {i = var zero} ()
 wkSi≢varzero {i = var (suc α)} ()
 wkSi≢varzero {i = suc i} ()
-
-
-wkSi≡suc⁻ : wkSi {n = n} i ≡ var (suc β) → i ≡ var β
-wkSi≡suc⁻ {i = var zero} refl = refl
-wkSi≡suc⁻ {i = var (suc α)} refl = refl
 
 
 wkSi-inj : wkSi {n = n} i ≡ wkSi j → i ≡ j
@@ -262,6 +257,10 @@ wkSi-inj {i = var (suc α)} {var (suc β)} x
   = ≡.cong var (suc-inj′ (var-inj x))
 wkSi-inj {i = suc i} {suc j} x
   = ≡.cong suc (wkSi-inj (suc-inj x))
+
+
+wkSi≡suc⁻ : wkSi {n = n} i ≡ var (suc β) → i ≡ var β
+wkSi≡suc⁻ = wkSi-inj
 
 
 --------------------------------------------------------------------------------

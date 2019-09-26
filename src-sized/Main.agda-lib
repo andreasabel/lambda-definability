@@ -1,2 +1,5 @@
-include: .
-depend: standard-library
+include:
+  src
+  lib/cats
+depend:
+  standard-library

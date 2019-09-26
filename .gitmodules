@@ -1,0 +1,3 @@
+[submodule "src-sized/lib/cats"]
+	path = src-sized/lib/cats
+	url = https://github.com/jlimperg/cats

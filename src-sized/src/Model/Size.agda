@@ -163,6 +163,8 @@ open WFInd.Build <-wf public using () renaming
   ; wfRec-unfold to <-rec-unfold
   ; wfInd-ind to <-ind-ind
   ; wfIndΣ to <-indΣ
+  ; wfIndΣ-unfold to <-indΣ-unfold
+  ; wfIndΣ′ to <-indΣ′
   )
 
 

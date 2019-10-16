@@ -24,3 +24,7 @@ instance
       ; unique = λ _ → ≈⁺ λ γ x → refl
       }
     }
+
+
+private
+  open module HT {Δ} = HasTerminal (hasTerminal {Δ}) public using (! ; !-unique)

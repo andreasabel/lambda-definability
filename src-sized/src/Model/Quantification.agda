@@ -67,6 +67,25 @@ abstract
     , funext λ m → funext λ m<n → funext λ m′ → funext λ m<n′ → T .eq-IsProp _ _))
 
 
+⟦∀⟧′-resp-≈⟦Type⟧ : ∀ {Δ n T U}
+  → T ≈⟦Type⟧ U
+  → ∀ {δ} → ⟦∀⟧′ {Δ} n T δ ≅ ⟦∀⟧′ n U δ
+⟦∀⟧′-resp-≈⟦Type⟧ T≈U = record
+  { forth = λ f → record
+    { arr = λ m m<n → T≈U .forth .fobj (f .arr m m<n)
+    ; param = λ m m<n m′ m′<n → T≈U .forth .feq _ (f .param m m<n m′ m′<n)
+    }
+  ; isIso = record
+    { back = λ f → record
+      { arr = λ m m<n → T≈U .back .fobj (f .arr m m<n)
+      ; param = λ m m<n m′ m′<n → T≈U .back .feq _ (f .param m m<n m′ m′<n)
+      }
+    ; back∘forth = λ x → ⟦∀⟧′-≡⁺ _ _ λ m m<n → T≈U .back-forth .≈⁻ _ _
+    ; forth∘back = λ x → ⟦∀⟧′-≡⁺ _ _ λ m m<n → T≈U .forth-back .≈⁻ _ _
+    }
+  }
+
+
 ⟦∀⟧ : ∀ {Δ} n (T : ⟦Type⟧ ⟦ Δ ∙ n ⟧Δ) → ⟦Type⟧ ⟦ Δ ⟧Δ
 ⟦∀⟧ n T = record
   { ObjHSet = λ δ → HLevel⁺ (⟦∀⟧′ n T δ) ⟦∀⟧′-IsSet
@@ -76,28 +95,20 @@ abstract
   }
 
 
--- Do we need this proof? We could also prove this via ≈⟦Type⟧→≡, but that would
--- compute much less.
 ⟦∀⟧-resp-≈⟦Type⟧ : ∀ {Δ} n {T U : ⟦Type⟧ ⟦ Δ ∙ n ⟧Δ}
   → T ≈⟦Type⟧ U
   → ⟦∀⟧ n T ≈⟦Type⟧ ⟦∀⟧ n U
 ⟦∀⟧-resp-≈⟦Type⟧ n T≈U = record
   { forth = record
-    { fobj = λ f → record
-      { arr = λ m m<n → T≈U .forth .fobj (f .arr m m<n)
-      ; param = λ m m<n m′ m′<n → T≈U .forth .feq _ (f .param m m<n m′ m′<n)
-      }
-    ; feq = λ γ≈γ′ x≈y a a₁ a₂ a₃ → T≈U .forth .feq _ (x≈y a a₁ a₂ a₃)
+    { fobj = ⟦∀⟧′-resp-≈⟦Type⟧ T≈U .forth
+    ; feq = λ δ≈δ′ x≈y a a₁ a₂ a₃ → T≈U .forth .feq _ (x≈y a a₁ a₂ a₃)
     }
   ; back = record
-    { fobj = λ f → record
-      { arr = λ m m<n → T≈U .back .fobj (f .arr m m<n)
-      ; param = λ m m<n m′ m′<n → T≈U .back .feq _ (f .param m m<n m′ m′<n)
-      }
-    ; feq = λ γ≈γ′ x≈y a a₁ a₂ a₃ → T≈U .back .feq _ (x≈y a a₁ a₂ a₃)
+    { fobj = ⟦∀⟧′-resp-≈⟦Type⟧ T≈U .back
+    ; feq = λ δ≈δ′ x≈y a a₁ a₂ a₃ → T≈U .back .feq _ (x≈y a a₁ a₂ a₃)
     }
-  ; back-forth = ≈⁺ λ γ x → ⟦∀⟧′-≡⁺ _ _ λ m m<n → T≈U .back-forth .≈⁻ _ _
-  ; forth-back = ≈⁺ λ γ x → ⟦∀⟧′-≡⁺ _ _ λ m m<n → T≈U .forth-back .≈⁻ _ _
+  ; back-forth = ≈⁺ λ δ x → ⟦∀⟧′-resp-≈⟦Type⟧ T≈U .back∘forth _
+  ; forth-back = ≈⁺ λ δ x → ⟦∀⟧′-resp-≈⟦Type⟧ T≈U .forth∘back _
   }
 
 
